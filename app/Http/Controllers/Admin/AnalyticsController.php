@@ -16,8 +16,8 @@ class AnalyticsController extends Controller
     {
         // Taux de conversion du funnel
         $funnel = [
-            'scans' => ConversationSession::where('status', 'SCAN')->count(),
-            'optins' => ConversationSession::where('status', 'OPT_IN')->count(),
+            'scans' => ConversationSession::where('state', ConversationSession::STATE_SCAN)->count(),
+            'optins' => ConversationSession::where('state', ConversationSession::STATE_OPT_IN)->count(),
             'inscriptions' => User::whereNotNull('opted_in_at')->count(),
         ];
 

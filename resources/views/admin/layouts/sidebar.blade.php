@@ -1,10 +1,10 @@
-<aside class="w-64 bg-gray-900 text-white flex-shrink-0" x-data="{ open: true }">
-    <div class="p-6">
+<aside class="w-64 bg-gray-900 text-white flex-shrink-0 flex flex-col h-screen" x-data="{ open: true }">
+    <div class="p-6 flex-shrink-0">
         <h1 class="text-2xl font-bold">🦁 CAN 2025</h1>
         <p class="text-gray-400 text-sm">Kinshasa</p>
     </div>
 
-    <nav class="mt-6">
+    <nav class="mt-6 flex-1 overflow-y-auto pb-6">
         <!-- Dashboard -->
         <a href="{{ route('admin.dashboard') }}"
             class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition {{ request()->routeIs('admin.dashboard') ? 'bg-gray-800 text-white border-l-4 border-blue-500' : '' }}">
