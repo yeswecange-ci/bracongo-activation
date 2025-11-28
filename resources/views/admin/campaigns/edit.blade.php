@@ -35,6 +35,42 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
             </div>
 
+            <!-- Audience -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Type d'audience *</label>
+                <select name="audience_type" id="audienceType" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <option value="all" {{ old('audience_type', $campaign->audience_type) == 'all' ? 'selected' : '' }}>Tous les utilisateurs</option>
+                    <option value="village" {{ old('audience_type', $campaign->audience_type) == 'village' ? 'selected' : '' }}>Par village</option>
+                    <option value="status" {{ old('audience_type', $campaign->audience_type) == 'status' ? 'selected' : '' }}>Par statut</option>
+                </select>
+            </div>
+
+            <div id="villageSection" class="mb-4" style="display: {{ old('audience_type', $campaign->audience_type) == 'village' ? 'block' : 'none' }};">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Village</label>
+                <select name="village_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- Choisir un village --</option>
+                    @foreach($villages as $village)
+                        <option value="{{ $village->id }}" {{ old('village_id', $campaign->village_id) == $village->id ? 'selected' : '' }}>
+                            {{ $village->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div id="statusSection" class="mb-4" style="display: {{ old('audience_type', $campaign->audience_type) == 'status' ? 'block' : 'none' }};">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                <select name="audience_status"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">-- Choisir --</option>
+                    <option value="inscribed" {{ old('audience_status', $campaign->audience_status) == 'inscribed' ? 'selected' : '' }}>Inscrits</option>
+                    <option value="has_pronostic" {{ old('audience_status', $campaign->audience_status) == 'has_pronostic' ? 'selected' : '' }}>Avec pronostics</option>
+                    <option value="is_winner" {{ old('audience_status', $campaign->audience_status) == 'is_winner' ? 'selected' : '' }}>Gagnants</option>
+                    <option value="no_pronostic" {{ old('audience_status', $campaign->audience_status) == 'no_pronostic' ? 'selected' : '' }}>Sans pronostic</option>
+                </select>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Message *</label>
                 <textarea name="message" rows="8" required maxlength="1600"
@@ -53,4 +89,18 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const audienceType = document.getElementById('audienceType');
+    const villageSection = document.getElementById('villageSection');
+    const statusSection = document.getElementById('statusSection');
+
+    // Gérer l'affichage de l'audience
+    audienceType.addEventListener('change', function() {
+        villageSection.style.display = this.value === 'village' ? 'block' : 'none';
+        statusSection.style.display = this.value === 'status' ? 'block' : 'none';
+    });
+});
+</script>
 @endsection
