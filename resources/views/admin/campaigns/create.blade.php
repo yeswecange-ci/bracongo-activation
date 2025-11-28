@@ -55,6 +55,28 @@
                 </div>
             </div>
 
+            <!-- Match (optionnel) -->
+            <div class="mb-6 pb-6 border-b">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Match associé (optionnel)</h2>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sélectionner un match</label>
+                    <select name="match_id" id="matchSelect"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Aucun match --</option>
+                        @foreach($matches as $match)
+                            <option value="{{ $match->id }}"
+                                data-team-a="{{ $match->team_a }}"
+                                data-team-b="{{ $match->team_b }}"
+                                data-date="{{ $match->match_date->format('d/m/Y à H:i') }}">
+                                {{ $match->team_a }} vs {{ $match->team_b }} - {{ $match->match_date->format('d/m/Y H:i') }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Variables disponibles si match sélectionné : {match_equipe_a}, {match_equipe_b}, {match_date}</p>
+                </div>
+            </div>
+
             <!-- Audience -->
             <div class="mb-6 pb-6 border-b">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Audience cible</h2>
@@ -107,8 +129,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Message *</label>
                     <textarea name="message" id="messageBody" rows="8" required maxlength="1600"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Ex: Bonjour {nom},&#10;&#10;Nouveau match aujourd'hui !&#10;RDC vs Maroc - 15 Janvier à 20h00&#10;&#10;Envoie ton pronostic maintenant !">{{ old('message') }}</textarea>
-                    <p class="text-xs text-gray-500 mt-1">Variables disponibles : {nom}, {prenom}, {village}, {phone}</p>
+                        placeholder="Ex: Bonjour {nom},&#10;&#10;Nouveau match aujourd'hui !&#10;{match_equipe_a} vs {match_equipe_b}&#10;Le {match_date}&#10;&#10;Envoie ton pronostic maintenant !">{{ old('message') }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Variables disponibles : {nom}, {prenom}, {village}, {phone}, {match_equipe_a}, {match_equipe_b}, {match_date}</p>
                     <p class="text-xs text-gray-400 mt-1">Caractères : <span id="charCount">0</span>/1600</p>
                 </div>
 

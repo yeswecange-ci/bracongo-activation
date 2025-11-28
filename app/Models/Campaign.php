@@ -14,21 +14,32 @@ class Campaign extends Model
         'type',
         'target_segment',
         'village_id',
+        'match_id',
         'scheduled_at',
         'status',
         'total_recipients',
         'sent_count',
         'failed_count',
+        'audience_type',
+        'audience_status',
+        'message',
+        'sent_at',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'sent_at' => 'datetime',
     ];
 
     // Relations
     public function village()
     {
         return $this->belongsTo(Village::class);
+    }
+
+    public function match()
+    {
+        return $this->belongsTo(FootballMatch::class, 'match_id');
     }
 
     public function messages()

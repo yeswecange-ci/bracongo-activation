@@ -36,8 +36,11 @@ class CampaignController extends Controller
     {
         $villages = Village::where('is_active', true)->get();
         $templates = MessageTemplate::where('is_active', true)->get();
+        $matches = FootballMatch::where('status', '!=', 'finished')
+            ->orderBy('match_date')
+            ->get();
 
-        return view('admin.campaigns.create', compact('villages', 'templates'));
+        return view('admin.campaigns.create', compact('villages', 'templates', 'matches'));
     }
 
     public function store(Request $request)
@@ -46,6 +49,7 @@ class CampaignController extends Controller
             'name' => 'required|string|max:255',
             'audience_type' => 'required|in:all,village,status',
             'village_id' => 'nullable|exists:villages,id',
+            'match_id' => 'nullable|exists:matches,id',
             'audience_status' => 'nullable|string',
             'message' => 'required|string|max:1600',
             'scheduled_at' => 'nullable|date|after:now',
@@ -107,6 +111,7 @@ class CampaignController extends Controller
             'name' => 'required|string|max:255',
             'audience_type' => 'required|in:all,village,status',
             'village_id' => 'nullable|exists:villages,id',
+            'match_id' => 'nullable|exists:matches,id',
             'audience_status' => 'nullable|string',
             'message' => 'required|string|max:1600',
             'scheduled_at' => 'nullable|date|after:now',
@@ -178,7 +183,7 @@ class CampaignController extends Controller
             CampaignMessage::create([
                 'campaign_id' => $campaign->id,
                 'user_id' => $user->id,
-                'message' => $this->personalizeMessage($campaign->message, $user),
+                'message' => $this->personalizeMessage($campaign->message, $user, $campaign),
                 'status' => 'pending',
             ]);
         }
@@ -304,9 +309,9 @@ class CampaignController extends Controller
     }
 
     /**
-     * Personnaliser le message avec les variables utilisateur
+     * Personnaliser le message avec les variables utilisateur et match
      */
-    protected function personalizeMessage(?string $message, User $user): string
+    protected function personalizeMessage(?string $message, User $user, Campaign $campaign = null): string
     {
         if (empty($message)) {
             return '';
@@ -318,6 +323,13 @@ class CampaignController extends Controller
             '{village}' => $user->village->name ?? 'ton village',
             '{phone}' => $user->phone,
         ];
+
+        // Ajouter les variables du match si disponible
+        if ($campaign && $campaign->match) {
+            $replacements['{match_equipe_a}'] = $campaign->match->team_a;
+            $replacements['{match_equipe_b}'] = $campaign->match->team_b;
+            $replacements['{match_date}'] = $campaign->match->match_date->format('d/m/Y à H:i');
+        }
 
         return str_replace(array_keys($replacements), array_values($replacements), $message);
     }
