@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+        // Faire confiance aux proxies (Coolify, Nginx, etc.) pour HTTPS
+        $middleware->trustProxies(at: '*');
     })
     ->withSchedule(function (Schedule $schedule): void {
         // Calculer les gagnants automatiquement toutes les 5 minutes
