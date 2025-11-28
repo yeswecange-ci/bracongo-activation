@@ -79,13 +79,17 @@
         <!-- Graphique Inscriptions (7 derniers jours) -->
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">Évolution des Inscriptions (7 derniers jours)</h2>
-            <canvas id="registrationChart" height="80"></canvas>
+            <div style="height: 250px;">
+                <canvas id="registrationChart"></canvas>
+            </div>
         </div>
 
         <!-- Graphique Sources -->
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">Répartition par Source</h2>
-            <canvas id="sourceChart" height="80"></canvas>
+            <div style="height: 250px;">
+                <canvas id="sourceChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -94,7 +98,9 @@
         <!-- Graphique Top Villages -->
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">Top 5 Villages</h2>
-            <canvas id="villageChart" height="80"></canvas>
+            <div style="height: 250px;">
+                <canvas id="villageChart"></canvas>
+            </div>
         </div>
 
         <!-- Taux de Livraison Messages -->
@@ -258,17 +264,27 @@ new Chart(document.getElementById('registrationChart'), {
             borderColor: 'rgb(59, 130, 246)',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             tension: 0.4,
-            fill: true
+            fill: true,
+            borderWidth: 2
         }]
     },
     options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+                mode: 'index',
+                intersect: false
+            }
         },
         scales: {
-            y: { beginAtZero: true }
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
         }
     }
 });
@@ -298,7 +314,15 @@ new Chart(document.getElementById('sourceChart'), {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { position: 'bottom' }
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 10,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
         }
     }
 });
@@ -316,6 +340,7 @@ new Chart(document.getElementById('villageChart'), {
             label: 'Nombre d\'inscrits',
             data: villageCounts,
             backgroundColor: 'rgb(34, 197, 94)',
+            borderRadius: 4
         }]
     },
     options: {
@@ -323,10 +348,19 @@ new Chart(document.getElementById('villageChart'), {
         maintainAspectRatio: false,
         indexAxis: 'y',
         plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+                mode: 'index',
+                intersect: false
+            }
         },
         scales: {
-            x: { beginAtZero: true }
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
         }
     }
 });
