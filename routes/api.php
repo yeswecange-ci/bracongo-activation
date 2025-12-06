@@ -19,6 +19,7 @@ Route::post('/webhook/whatsapp/status', [WhatsAppWebhookController::class, 'stat
 
 // Endpoints pour Twilio Studio Flow CAN 2025
 Route::prefix('can')->group(function () {
+    // Tracking & Inscription
     Route::post('/scan', [TwilioStudioController::class, 'scan'])->name('api.can.scan');
     Route::post('/optin', [TwilioStudioController::class, 'optin'])->name('api.can.optin');
     Route::post('/inscription', [TwilioStudioController::class, 'inscription'])->name('api.can.inscription');
@@ -27,6 +28,15 @@ Route::prefix('can')->group(function () {
     Route::post('/abandon', [TwilioStudioController::class, 'abandon'])->name('api.can.abandon');
     Route::post('/timeout', [TwilioStudioController::class, 'timeout'])->name('api.can.timeout');
     Route::post('/error', [TwilioStudioController::class, 'error'])->name('api.can.error');
+
+    // Nouvelles API pour le flow interactif
+    Route::post('/check-user', [TwilioStudioController::class, 'checkUser'])->name('api.can.check-user');
+    Route::get('/villages', [TwilioStudioController::class, 'getVillages'])->name('api.can.villages');
+    Route::get('/matches/today', [TwilioStudioController::class, 'getMatchesToday'])->name('api.can.matches.today');
+    Route::post('/pronostic', [TwilioStudioController::class, 'savePronostic'])->name('api.can.pronostic');
+    Route::post('/unsubscribe', [TwilioStudioController::class, 'unsubscribe'])->name('api.can.unsubscribe');
+    Route::get('/partners', [TwilioStudioController::class, 'getPartners'])->name('api.can.partners');
+    Route::get('/prizes', [TwilioStudioController::class, 'getPrizes'])->name('api.can.prizes');
 });
 
 // Routes API authentifiées (pour future app mobile par exemple)

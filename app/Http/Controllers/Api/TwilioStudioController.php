@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ConversationSession;
+use App\Models\FootballMatch;
+use App\Models\Partner;
+use App\Models\Prize;
+use App\Models\Pronostic;
 use App\Models\User;
 use App\Models\Village;
 use Illuminate\Http\Request;
@@ -321,6 +325,292 @@ class TwilioStudioController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Error logged successfully',
+        ]);
+    }
+
+    /**
+     * Endpoint: POST /api/can/check-user
+     * Vérifier si l'utilisateur existe déjà
+     */
+    public function checkUser(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        $phone = $this->formatPhone($validated['phone']);
+        $user = User::where('phone', $phone)->where('is_active', true)->first();
+
+        if ($user) {
+            return response()->json([
+                'success' => true,
+                'user_exists' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'village_id' => $user->village_id,
+                    'village_name' => $user->village?->name ?? 'N/A',
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'user_exists' => false,
+        ]);
+    }
+
+    /**
+     * Endpoint: GET /api/can/villages
+     * Récupérer la liste des villages actifs
+     */
+    public function getVillages(Request $request)
+    {
+        $villages = Village::where('is_active', true)
+            ->withCount('users')
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'address', 'capacity']);
+
+        if ($villages->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'has_villages' => false,
+                'message' => 'Aucun village disponible pour le moment.',
+                'villages' => [],
+            ]);
+        }
+
+        $formattedVillages = $villages->map(function ($village, $index) {
+            return [
+                'id' => $village->id,
+                'number' => $index + 1,
+                'name' => $village->name,
+                'address' => $village->address,
+                'capacity' => $village->capacity,
+                'members_count' => $village->users_count,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'has_villages' => true,
+            'count' => $villages->count(),
+            'villages' => $formattedVillages,
+        ]);
+    }
+
+    /**
+     * Endpoint: GET /api/can/matches/today
+     * Récupérer les matchs du jour
+     */
+    public function getMatchesToday(Request $request)
+    {
+        $today = now()->startOfDay();
+        $endOfDay = now()->endOfDay();
+
+        $matches = FootballMatch::whereBetween('match_date', [$today, $endOfDay])
+            ->where('pronostic_enabled', true)
+            ->whereIn('status', ['scheduled', 'live'])
+            ->orderBy('match_date', 'asc')
+            ->get(['id', 'team_a', 'team_b', 'match_date', 'status']);
+
+        if ($matches->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'has_matches' => false,
+                'message' => 'Aucun match disponible aujourd\'hui.',
+                'matches' => [],
+            ]);
+        }
+
+        $formattedMatches = $matches->map(function ($match, $index) {
+            return [
+                'id' => $match->id,
+                'number' => $index + 1,
+                'team_a' => $match->team_a,
+                'team_b' => $match->team_b,
+                'match_time' => $match->match_date->format('H:i'),
+                'status' => $match->status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'has_matches' => true,
+            'count' => $matches->count(),
+            'matches' => $formattedMatches,
+        ]);
+    }
+
+    /**
+     * Endpoint: POST /api/can/pronostic
+     * Enregistrer un pronostic
+     */
+    public function savePronostic(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+            'match_id' => 'required|integer|exists:matches,id',
+            'score_a' => 'required|integer|min:0|max:20',
+            'score_b' => 'required|integer|min:0|max:20',
+        ]);
+
+        $phone = $this->formatPhone($validated['phone']);
+        $user = User::where('phone', $phone)->where('is_active', true)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Utilisateur non trouvé. Veuillez vous inscrire d\'abord.',
+            ], 404);
+        }
+
+        $match = FootballMatch::find($validated['match_id']);
+
+        // Vérifier si le match accepte encore les pronostics
+        if (!Pronostic::canBet($match)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce match n\'accepte plus de pronostics.',
+            ], 400);
+        }
+
+        // Créer ou mettre à jour le pronostic
+        $pronostic = Pronostic::createOrUpdate(
+            $user,
+            $match,
+            $validated['score_a'],
+            $validated['score_b']
+        );
+
+        Log::info('Twilio Studio - Pronostic saved', [
+            'user_id' => $user->id,
+            'match_id' => $match->id,
+            'prediction' => "{$validated['score_a']} - {$validated['score_b']}",
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pronostic enregistré avec succès !',
+            'pronostic' => [
+                'id' => $pronostic->id,
+                'match' => "{$match->team_a} vs {$match->team_b}",
+                'prediction' => "{$validated['score_a']} - {$validated['score_b']}",
+            ],
+        ]);
+    }
+
+    /**
+     * Endpoint: POST /api/can/unsubscribe
+     * Désinscrire un utilisateur
+     */
+    public function unsubscribe(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        $phone = $this->formatPhone($validated['phone']);
+        $user = User::where('phone', $phone)->first();
+
+        if ($user) {
+            $user->update([
+                'is_active' => false,
+                'registration_status' => 'UNSUBSCRIBED',
+            ]);
+
+            Log::info('Twilio Studio - User unsubscribed', [
+                'user_id' => $user->id,
+                'phone' => $phone,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Désinscription effectuée avec succès.',
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Utilisateur non trouvé.',
+        ], 404);
+    }
+
+    /**
+     * Endpoint: GET /api/can/partners
+     * Récupérer la liste des partenaires actifs
+     */
+    public function getPartners(Request $request)
+    {
+        $partners = Partner::where('is_active', true)
+            ->with('village:id,name')
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'village_id']);
+
+        if ($partners->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'has_partners' => false,
+                'message' => 'Aucun partenaire disponible pour le moment.',
+                'partners' => [],
+            ]);
+        }
+
+        $formattedPartners = $partners->map(function ($partner, $index) {
+            return [
+                'id' => $partner->id,
+                'number' => $index + 1,
+                'name' => $partner->name,
+                'village' => $partner->village?->name ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'has_partners' => true,
+            'count' => $partners->count(),
+            'partners' => $formattedPartners,
+        ]);
+    }
+
+    /**
+     * Endpoint: GET /api/can/prizes
+     * Récupérer la liste des lots disponibles
+     */
+    public function getPrizes(Request $request)
+    {
+        $prizes = Prize::where('is_active', true)
+            ->whereRaw('quantity > distributed_count')
+            ->with('partner:id,name')
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'description', 'partner_id', 'quantity', 'distributed_count']);
+
+        if ($prizes->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'has_prizes' => false,
+                'message' => 'Aucun lot disponible pour le moment.',
+                'prizes' => [],
+            ]);
+        }
+
+        $formattedPrizes = $prizes->map(function ($prize, $index) {
+            return [
+                'id' => $prize->id,
+                'number' => $index + 1,
+                'name' => $prize->name,
+                'description' => $prize->description,
+                'partner' => $prize->partner?->name ?? 'N/A',
+                'remaining' => $prize->remaining,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'has_prizes' => true,
+            'count' => $prizes->count(),
+            'prizes' => $formattedPrizes,
         ]);
     }
 

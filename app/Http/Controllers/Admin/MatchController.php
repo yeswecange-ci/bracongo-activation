@@ -60,10 +60,60 @@ class MatchController extends Controller
 
         $validated['pronostic_enabled'] = $request->has('pronostic_enabled');
 
+        // Vérifier si le match passe à "finished" avec des scores définis
+        $isBecomingFinished = $validated['status'] === 'finished'
+            && $match->status !== 'finished'
+            && !is_null($validated['score_a'])
+            && !is_null($validated['score_b']);
+
         $match->update($validated);
+
+        // Calculer automatiquement les gagnants si le match vient de se terminer
+        if ($isBecomingFinished && !$match->winners_calculated) {
+            $this->calculateWinners($match);
+
+            return redirect()->route('admin.matches.index')
+                ->with('success', 'Match mis à jour et gagnants calculés automatiquement !');
+        }
 
         return redirect()->route('admin.matches.index')
             ->with('success', 'Match mis à jour avec succès !');
+    }
+
+    /**
+     * Calculer automatiquement les gagnants d'un match
+     */
+    private function calculateWinners(FootballMatch $match)
+    {
+        // Récupérer tous les pronostics pour ce match
+        $pronostics = $match->pronostics()->get();
+
+        $winnersCount = 0;
+
+        foreach ($pronostics as $pronostic) {
+            // Vérifier si le pronostic est correct (score exact)
+            $isWinner = ($pronostic->predicted_score_a === $match->score_a)
+                && ($pronostic->predicted_score_b === $match->score_b);
+
+            // Mettre à jour le statut du pronostic
+            $pronostic->update(['is_winner' => $isWinner]);
+
+            if ($isWinner) {
+                $winnersCount++;
+            }
+        }
+
+        // Marquer que les gagnants ont été calculés
+        $match->update(['winners_calculated' => true]);
+
+        \Log::info("Match {$match->id} - Gagnants calculés automatiquement", [
+            'match' => "{$match->team_a} vs {$match->team_b}",
+            'score_final' => "{$match->score_a} - {$match->score_b}",
+            'total_pronostics' => $pronostics->count(),
+            'winners_count' => $winnersCount,
+        ]);
+
+        return $winnersCount;
     }
 
     public function destroy(FootballMatch $match)
