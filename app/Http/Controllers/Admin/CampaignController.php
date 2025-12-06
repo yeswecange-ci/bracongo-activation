@@ -90,7 +90,7 @@ class CampaignController extends Controller
 
     public function edit(Campaign $campaign)
     {
-        if (in_array($campaign->status, ['sending', 'sent'])) {
+        if (in_array($campaign->status, ['processing', 'sent'])) {
             return redirect()->route('admin.campaigns.show', $campaign)
                 ->with('error', 'Impossible de modifier une campagne en cours ou terminée.');
         }
@@ -103,7 +103,7 @@ class CampaignController extends Controller
 
     public function update(Request $request, Campaign $campaign)
     {
-        if (in_array($campaign->status, ['sending', 'sent'])) {
+        if (in_array($campaign->status, ['processing', 'sent'])) {
             return redirect()->route('admin.campaigns.show', $campaign)
                 ->with('error', 'Impossible de modifier une campagne en cours ou terminée.');
         }
@@ -129,7 +129,7 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign)
     {
-        if ($campaign->status === 'sending') {
+        if ($campaign->status === 'processing') {
             return redirect()->route('admin.campaigns.index')
                 ->with('error', 'Impossible de supprimer une campagne en cours d\'envoi.');
         }
@@ -168,13 +168,13 @@ class CampaignController extends Controller
      */
     public function send(Campaign $campaign)
     {
-        if (in_array($campaign->status, ['sending', 'sent'])) {
+        if (in_array($campaign->status, ['processing', 'sent'])) {
             return redirect()->route('admin.campaigns.show', $campaign)
                 ->with('error', 'Cette campagne a déjà été envoyée.');
         }
 
         // Marquer la campagne comme "en cours d'envoi"
-        $campaign->update(['status' => 'sending', 'sent_at' => now()]);
+        $campaign->update(['status' => 'processing', 'sent_at' => now()]);
 
         // Récupérer les destinataires
         $recipients = $this->getRecipients($campaign);
