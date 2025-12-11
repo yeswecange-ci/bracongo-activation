@@ -338,6 +338,8 @@ class TwilioStudioController extends Controller
      * Endpoint: POST /api/can/check-user
      * Vérifier si l'utilisateur existe déjà
      */
+    // Dans TwilioStudioController.php - checkUser()
+
     public function checkUser(Request $request)
     {
         $validated = $request->validate([
@@ -345,31 +347,30 @@ class TwilioStudioController extends Controller
         ]);
 
         $phone = $this->formatPhone($validated['phone']);
+        $user  = User::where('phone', $phone)->first();
 
-        // Chercher l'utilisateur (actif ou non)
-        $user = User::where('phone', $phone)->first();
-
-        // Pas trouvé → nouveau utilisateur
         if (! $user) {
             return response()->json([
-                'status' => 'NOT_FOUND',
+                'status'  => 'NOT_FOUND',
+                'message' => 'User not found',
             ]);
         }
 
-        // Utilisateur STOP ou inactif → proposer réactivation
         if (! $user->is_active || $user->registration_status === 'STOP') {
             return response()->json([
-                'status' => 'STOP',
-                'name'   => $user->name,
-                'phone'  => $user->phone,
+                'status'  => 'STOP',
+                'name'    => $user->name,
+                'phone'   => $user->phone,
+                'message' => 'User was stopped',
             ]);
         }
 
-        // Utilisateur déjà inscrit et actif
+        // ✅ IMPORTANT : Retourner exactement "INSCRIT"
         return response()->json([
-            'status' => 'INSCRIT',
-            'name'   => $user->name,
-            'phone'  => $user->phone,
+            'status'  => 'INSCRIT', // Doit être exactement ce mot
+            'name'    => $user->name,
+            'phone'   => $user->phone,
+            'user_id' => $user->id, // Ajouter l'ID pour debug
         ]);
     }
 
