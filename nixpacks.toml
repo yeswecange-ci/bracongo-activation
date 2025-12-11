@@ -1,6 +1,6 @@
-# Nixpacks configuration for Laravel + Node.js
+# Nixpacks configuration for Laravel with Node.js 20
 [phases.setup]
-nixPkgs = ["nodejs-20_x", "php82", "nginx"]
+nixPkgs = ["nodejs_20", "php82", "composer", "nginx"]
 
 [phases.install]
 cmds = [
