@@ -602,7 +602,7 @@ class TwilioStudioController extends Controller
             $message .= "   {$pronoStatus} Pronostics " . ($match->pronostic_enabled ? 'ouverts' : 'fermés') . "\n\n";
         }
 
-        $message .= "💡 Envoie PRONO pour faire ton pronostic !";
+        $message .= "💡 Envoie le numéro correspondant à ton match pour faire ton pronostic !";
 
         return response()->json([
             'success'     => true,

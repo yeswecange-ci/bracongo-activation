@@ -19,7 +19,8 @@
       "Bash(php debug_pronostic.php:*)",
       "Bash(php test_flow_complet.php:*)",
       "Bash(php check_pronostics.php:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []
