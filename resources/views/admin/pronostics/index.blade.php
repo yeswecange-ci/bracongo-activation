@@ -73,10 +73,21 @@
                             <div class="text-sm text-gray-900">{{ $prono->match->team_a }} vs {{ $prono->match->team_b }}</div>
                             <div class="text-sm text-gray-500">{{ $prono->match->match_date->format('d/m/Y H:i') }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold text-gray-900">
-                                {{ $prono->predicted_score_a }} - {{ $prono->predicted_score_b }}
-                            </span>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-gray-900">
+                                {{ $prono->prediction_text }}
+                            </div>
+                            @if($prono->prediction_type)
+                                <div class="text-xs text-gray-500 mt-1">
+                                    @if($prono->prediction_type === 'team_a_win')
+                                        <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Victoire {{ $prono->match->team_a }}</span>
+                                    @elseif($prono->prediction_type === 'team_b_win')
+                                        <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded">Victoire {{ $prono->match->team_b }}</span>
+                                    @else
+                                        <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded">Match nul</span>
+                                    @endif
+                                </div>
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($prono->match->status === 'finished')

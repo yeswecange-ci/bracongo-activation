@@ -64,8 +64,9 @@ class PronosticController extends Controller
         $stats = [
             'total' => $pronostics->count(),
             'winners' => $pronostics->where('is_winner', true)->count(),
-            'by_score' => $pronostics->groupBy(function ($p) {
-                return $p->predicted_score_a . '-' . $p->predicted_score_b;
+            'by_prediction' => $pronostics->groupBy(function ($p) {
+                // Utiliser prediction_text qui gère les deux modes
+                return $p->prediction_text;
             })->map->count()->sortDesc(),
         ];
 
