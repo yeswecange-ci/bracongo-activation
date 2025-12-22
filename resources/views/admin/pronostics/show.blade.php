@@ -29,9 +29,32 @@
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Pronostic</dt>
                     <dd class="mt-1">
-                        <span class="text-2xl font-bold text-blue-600">
-                            {{ $pronostic->predicted_score_a }} - {{ $pronostic->predicted_score_b }}
-                        </span>
+                        <div class="text-2xl font-bold text-blue-600 mb-2">
+                            {{ $pronostic->prediction_text }}
+                        </div>
+                        @if($pronostic->prediction_type)
+                            <div class="mt-2">
+                                @if($pronostic->prediction_type === 'team_a_win')
+                                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800">
+                                        🏆 Victoire {{ $pronostic->match->team_a }}
+                                    </span>
+                                @elseif($pronostic->prediction_type === 'team_b_win')
+                                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
+                                        🏆 Victoire {{ $pronostic->match->team_b }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800">
+                                        🤝 Match nul
+                                    </span>
+                                @endif
+                            </div>
+                        @elseif($pronostic->predicted_score_a !== null && $pronostic->predicted_score_b !== null)
+                            <div class="mt-2">
+                                <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full bg-purple-100 text-purple-800">
+                                    📊 Score exact
+                                </span>
+                            </div>
+                        @endif
                     </dd>
                 </div>
 
@@ -96,7 +119,13 @@
 
                 <div>
                     <dt class="text-sm font-medium text-gray-500">Village</dt>
-                    <dd class="mt-1 text-sm text-gray-900">{{ $pronostic->user->village->name }}</dd>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        @if($pronostic->user->village)
+                            {{ $pronostic->user->village->name }}
+                        @else
+                            <span class="text-gray-400 italic">Non assigné</span>
+                        @endif
+                    </dd>
                 </div>
 
                 <div>

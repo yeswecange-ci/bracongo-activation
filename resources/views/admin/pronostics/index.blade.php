@@ -50,77 +50,112 @@
 
     <!-- Liste des pronostics -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilisateur</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Match</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pronostic</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Résultat</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($pronostics as $prono)
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $prono->user->name }}</div>
-                            <div class="text-sm text-gray-500">{{ $prono->user->phone }}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm text-gray-900">{{ $prono->match->team_a }} vs {{ $prono->match->team_b }}</div>
-                            <div class="text-sm text-gray-500">{{ $prono->match->match_date->format('d/m/Y H:i') }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold text-gray-900">
-                                {{ $prono->predicted_score_a }} - {{ $prono->predicted_score_b }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if($prono->match->status === 'finished')
-                                <span class="text-sm font-bold text-blue-600">
-                                    {{ $prono->match->score_a }} - {{ $prono->match->score_b }}
-                                </span>
-                            @else
-                                <span class="text-sm text-gray-400">-</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            @if($prono->match->status === 'finished')
-                                @if($prono->is_winner)
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                        ✅ Gagné
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilisateur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Match</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pronostic</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Résultat</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($pronostics as $prono)
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ $prono->user->name }}</div>
+                                <div class="text-sm text-gray-500">{{ $prono->user->phone }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">{{ $prono->match->team_a }} vs {{ $prono->match->team_b }}</div>
+                                <div class="text-sm text-gray-500">{{ $prono->match->match_date->format('d/m/Y H:i') }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-bold text-gray-900">
+                                    {{ $prono->prediction_text }}
+                                </div>
+                                @if($prono->prediction_type)
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        @if($prono->prediction_type === 'team_a_win')
+                                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Victoire {{ $prono->match->team_a }}</span>
+                                        @elseif($prono->prediction_type === 'team_b_win')
+                                            <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded">Victoire {{ $prono->match->team_b }}</span>
+                                        @else
+                                            <span class="px-2 py-0.5 bg-gray-100 text-gray-700 rounded">Match nul</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($prono->match->status === 'finished')
+                                    <span class="text-sm font-bold text-blue-600">
+                                        {{ $prono->match->score_a }} - {{ $prono->match->score_b }}
                                     </span>
                                 @else
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                        ❌ Perdu
+                                    <span class="text-sm text-gray-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($prono->match->status === 'finished')
+                                    @if($prono->is_winner)
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                            ✅ Gagné
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                            ❌ Perdu
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        ⏳ En attente
                                     </span>
                                 @endif
-                            @else
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    ⏳ En attente
-                                </span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $prono->created_at->format('d/m/Y H:i') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                            <x-action-button type="view" :href="route('admin.pronostics.show', $prono)" />
-                            <x-action-button type="delete" :href="route('admin.pronostics.destroy', $prono)" method="DELETE" confirm="Supprimer ce pronostic ?" />
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                            Aucun pronostic trouvé.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $prono->created_at->format('d/m/Y H:i') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end items-center gap-2">
+                                    <a href="{{ route('admin.pronostics.show', $prono) }}"
+                                       class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                       title="Voir les détails">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </a>
+                                    <form action="{{ route('admin.pronostics.destroy', $prono) }}"
+                                          method="POST"
+                                          class="inline-block"
+                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce pronostic ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Supprimer">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                Aucun pronostic trouvé.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
         <!-- Pagination -->
         <div class="px-6 py-4 bg-gray-50">
