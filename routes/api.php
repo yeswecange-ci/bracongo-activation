@@ -51,6 +51,7 @@ Route::prefix('can')->group(function () {
 
     // Pronostics
     Route::post('/check-pronostic', [TwilioStudioController::class, 'checkPronostic'])->name('api.can.check-pronostic'); // ✅ NOUVELLE ROUTE
+    Route::post('/user-pronostics', [TwilioStudioController::class, 'getUserPronostics'])->name('api.can.user-pronostics'); // ✅ NOUVELLE ROUTE
     Route::post('/pronostic', [TwilioStudioController::class, 'savePronostic'])
         ->middleware('force.json')
         ->name('api.can.pronostic');

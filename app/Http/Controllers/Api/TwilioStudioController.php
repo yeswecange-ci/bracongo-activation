@@ -726,6 +726,129 @@ class TwilioStudioController extends Controller
     }
 
     /**
+     * Endpoint: POST /api/can/user-pronostics
+     * Récupérer tous les pronostics d'un utilisateur avec vérification des matchs restants
+     */
+    public function getUserPronostics(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+        ]);
+
+        $phone = $this->formatPhone($validated['phone']);
+        $user = User::where('phone', $phone)->where('is_active', true)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Utilisateur non trouvé',
+            ], 404);
+        }
+
+        // Récupérer les matchs disponibles pour pronostics
+        $availableMatches = FootballMatch::where('pronostic_enabled', true)
+            ->where('status', 'scheduled')
+            ->where('match_date', '>', now()->addMinutes(5))
+            ->orderBy('match_date', 'asc')
+            ->get();
+
+        // Récupérer les pronostics de l'utilisateur
+        $userPronostics = Pronostic::where('user_id', $user->id)
+            ->whereIn('match_id', $availableMatches->pluck('id'))
+            ->with('match')
+            ->get();
+
+        // Identifier les matchs sans pronostic
+        $matchesWithPronostic = $userPronostics->pluck('match_id')->toArray();
+        $matchesWithoutPronostic = $availableMatches->filter(function ($match) use ($matchesWithPronostic) {
+            return !in_array($match->id, $matchesWithPronostic);
+        });
+
+        // Déterminer le statut
+        $hasAllPronostics = $matchesWithoutPronostic->isEmpty() && $availableMatches->isNotEmpty();
+        $hasPronostics = $userPronostics->isNotEmpty();
+
+        // Construire le message d'historique
+        $historiqueMessage = "";
+        if ($hasPronostics) {
+            $historiqueMessage = "📊 *TES PRONOSTICS*\n\n";
+            foreach ($userPronostics as $prono) {
+                $match = $prono->match;
+                $pronoText = match ($prono->prediction_type ?? 'custom') {
+                    'team_a_win' => "Victoire {$match->team_a}",
+                    'team_b_win' => "Victoire {$match->team_b}",
+                    'draw' => "Match nul",
+                    default => "{$prono->predicted_score_a} - {$prono->predicted_score_b}",
+                };
+                
+                $historiqueMessage .= "⚽ {$match->team_a} vs {$match->team_b}\n";
+                $historiqueMessage .= "   📅 " . $match->match_date->format('d/m à H:i') . "\n";
+                $historiqueMessage .= "   🎯 Ton prono : {$pronoText}\n\n";
+            }
+        }
+
+        // Construire le message des matchs restants
+        $remainingMatchesMessage = "";
+        if ($matchesWithoutPronostic->isNotEmpty()) {
+            $remainingMatchesMessage = "⚽ *MATCHS DISPONIBLES*\n\n";
+            $remainingMatchesMessage .= "Tu peux encore parier sur :\n\n";
+            
+            foreach ($matchesWithoutPronostic as $index => $match) {
+                $number = $index + 1;
+                $date = $match->match_date->format('d/m/Y');
+                $time = $match->match_date->format('H:i');
+                
+                $remainingMatchesMessage .= "{$number}. {$match->team_a} 🆚 {$match->team_b}\n";
+                $remainingMatchesMessage .= "   📅 {$date} à {$time}\n\n";
+            }
+            
+            $remainingMatchesMessage .= "💡 Envoie le numéro du match pour faire ton pronostic !";
+        }
+
+        Log::info('User pronostics retrieved', [
+            'user_id' => $user->id,
+            'has_all_pronostics' => $hasAllPronostics,
+            'total_available' => $availableMatches->count(),
+            'total_user_pronostics' => $userPronostics->count(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone,
+            ],
+            'has_all_pronostics' => $hasAllPronostics,
+            'has_pronostics' => $hasPronostics,
+            'total_available_matches' => $availableMatches->count(),
+            'total_user_pronostics' => $userPronostics->count(),
+            'remaining_matches_count' => $matchesWithoutPronostic->count(),
+            'historique_message' => $historiqueMessage,
+            'remaining_matches_message' => $remainingMatchesMessage,
+            'remaining_matches' => $matchesWithoutPronostic->map(function ($match, $index) {
+                return [
+                    'id' => $match->id,
+                    'number' => $index + 1,
+                    'team_a' => $match->team_a,
+                    'team_b' => $match->team_b,
+                    'match_date' => $match->match_date->format('d/m/Y'),
+                    'match_time' => $match->match_date->format('H:i'),
+                ];
+            })->values(),
+            'user_pronostics' => $userPronostics->map(function ($prono) {
+                $match = $prono->match;
+                return [
+                    'match_id' => $match->id,
+                    'teams' => "{$match->team_a} vs {$match->team_b}",
+                    'prediction' => $prono->prediction_type ?? "{$prono->predicted_score_a}-{$prono->predicted_score_b}",
+                    'created_at' => $prono->created_at->format('d/m/Y à H:i'),
+                ];
+            }),
+        ]);
+    }
+
+    /**
      * Endpoint: POST /api/can/pronostic
      * Enregistrer un pronostic (AVEC BLOCAGE DES MODIFICATIONS)
      */
