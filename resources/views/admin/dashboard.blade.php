@@ -68,8 +68,8 @@
                     </div>
                 </div>
                 <p class="text-yellow-100 text-sm font-medium mb-1">Pronostics</p>
-                <h3 class="text-4xl font-bold mb-2">{{ number_format($pronosticsThisWeek) }}</h3>
-                <p class="text-yellow-100 text-sm">Cette semaine ({{ $participationRate }}% participation)</p>
+                <h3 class="text-4xl font-bold mb-2">{{ number_format($totalPronostics) }}</h3>
+                <p class="text-yellow-100 text-sm">Total ({{ number_format($pronosticsThisWeek) }} cette semaine)</p>
             </div>
         </div>
 
