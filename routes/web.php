@@ -21,6 +21,8 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['admin'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])
             ->name('admin.dashboard');
+        Route::get('/dashboard/export/detailed-stats', [\App\Http\Controllers\Admin\DashboardController::class, 'exportDetailedStats'])
+            ->name('admin.dashboard.export.detailed-stats');
 
         // Routes Villages
         Route::resource('villages', \App\Http\Controllers\Admin\VillageController::class)
