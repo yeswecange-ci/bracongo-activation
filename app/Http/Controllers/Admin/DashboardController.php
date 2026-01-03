@@ -118,18 +118,21 @@ class DashboardController extends Controller
 
     public function exportDetailedStats()
     {
-        $filename = 'stats_detaillees_' . date('Y-m-d_His') . '.csv';
+        try {
+            $filename = 'stats_detaillees_' . date('Y-m-d_His') . '.csv';
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ];
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+                'Pragma' => 'no-cache',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Expires' => '0'
+            ];
 
-        $callback = function() {
-            $file = fopen('php://output', 'w');
+            $callback = function() {
+                $file = fopen('php://output', 'w');
+
+                try {
 
             // BOM UTF-8 pour Excel
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
@@ -245,15 +248,20 @@ class DashboardController extends Controller
 
             $villageStats = Village::withCount(['users' => function($query) {
                     $query->where('is_active', true);
-                }, 'pronostics'])
+                }])
                 ->orderByDesc('users_count')
                 ->get();
 
             foreach ($villageStats as $village) {
+                // Compter les pronostics via les utilisateurs du village
+                $pronosticsCount = Pronostic::whereHas('user', function($query) use ($village) {
+                    $query->where('village_id', $village->id);
+                })->count();
+
                 fputcsv($file, [
                     $village->name,
                     $village->users_count,
-                    $village->pronostics_count
+                    $pronosticsCount
                 ], ';');
             }
             fputcsv($file, [''], ';');
@@ -343,9 +351,23 @@ class DashboardController extends Controller
             fputcsv($file, [''], ';');
             fputcsv($file, ['Rapport généré le', date('Y-m-d H:i:s')], ';');
 
-            fclose($file);
-        };
+                } catch (\Exception $e) {
+                    // En cas d'erreur, on écrit l'erreur dans le CSV au lieu de générer du HTML
+                    fputcsv($file, [''], ';');
+                    fputcsv($file, ['=== ERREUR ==='], ';');
+                    fputcsv($file, ['Une erreur est survenue lors de la génération du rapport'], ';');
+                    fputcsv($file, ['Message d\'erreur : ' . $e->getMessage()], ';');
+                    fputcsv($file, ['Fichier : ' . $e->getFile() . ' (ligne ' . $e->getLine() . ')'], ';');
+                } finally {
+                    fclose($file);
+                }
+            };
 
-        return Response::stream($callback, 200, $headers);
+            return Response::stream($callback, 200, $headers);
+
+        } catch (\Exception $e) {
+            // Si l'erreur survient avant le streaming, on affiche une page d'erreur normale
+            return back()->with('error', 'Erreur lors de l\'export : ' . $e->getMessage());
+        }
     }
 }
