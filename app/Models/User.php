@@ -20,11 +20,15 @@ class User extends Authenticatable
         'registration_status',
         'opted_in_at',
         'is_active',
+        'quiz_score',
+        'quiz_answers_count',
     ];
 
     protected $casts = [
         'opted_in_at' => 'datetime',
         'is_active' => 'boolean',
+        'quiz_score' => 'integer',
+        'quiz_answers_count' => 'integer',
     ];
 
     // Relations
@@ -53,6 +57,11 @@ class User extends Authenticatable
     public function conversationSession()
     {
         return $this->hasOne(ConversationSession::class);
+    }
+
+    public function quizAnswers()
+    {
+        return $this->hasMany(QuizAnswer::class);
     }
 
     /**

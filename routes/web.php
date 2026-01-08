@@ -161,5 +161,31 @@ Route::prefix('admin')->group(function () {
             ->name('admin.analytics.export.users');
         Route::get('analytics/export/pronostics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'exportPronostics'])
             ->name('admin.analytics.export.pronostics');
+
+        // Routes Quiz Questions
+        Route::resource('quiz/questions', \App\Http\Controllers\Admin\QuizQuestionController::class)
+            ->names([
+                'index'   => 'admin.quiz.questions.index',
+                'create'  => 'admin.quiz.questions.create',
+                'store'   => 'admin.quiz.questions.store',
+                'show'    => 'admin.quiz.questions.show',
+                'edit'    => 'admin.quiz.questions.edit',
+                'update'  => 'admin.quiz.questions.update',
+                'destroy' => 'admin.quiz.questions.destroy',
+            ]);
+        Route::post('quiz/questions/{question}/toggle', [\App\Http\Controllers\Admin\QuizQuestionController::class, 'toggleActive'])
+            ->name('admin.quiz.questions.toggle');
+        Route::post('quiz/questions/reorder', [\App\Http\Controllers\Admin\QuizQuestionController::class, 'reorder'])
+            ->name('admin.quiz.questions.reorder');
+
+        // Routes Quiz Answers
+        Route::get('quiz/answers', [\App\Http\Controllers\Admin\QuizAnswerController::class, 'index'])
+            ->name('admin.quiz.answers.index');
+        Route::get('quiz/answers/{question}', [\App\Http\Controllers\Admin\QuizAnswerController::class, 'show'])
+            ->name('admin.quiz.answers.show');
+        Route::get('quiz/leaderboard', [\App\Http\Controllers\Admin\QuizAnswerController::class, 'leaderboard'])
+            ->name('admin.quiz.leaderboard');
+        Route::get('quiz/export', [\App\Http\Controllers\Admin\QuizAnswerController::class, 'export'])
+            ->name('admin.quiz.export');
     });
 });

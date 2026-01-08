@@ -22,7 +22,9 @@
       "Bash(php:*)",
       "Bash(powershell -Command:*)",
       "Bash(ls:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(dir \"C:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\\\\resources\\\\views\\\\admin\\\\pronostics\" /b)",
+      "Bash(git -C \"C:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\" log --oneline -20)"
     ],
     "deny": [],
     "ask": []

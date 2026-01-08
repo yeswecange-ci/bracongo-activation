@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\QuizController;
 use App\Http\Controllers\Api\TwilioStudioController;
 use App\Http\Controllers\Api\TwilioWebhookController;
 use App\Http\Controllers\Api\WhatsAppWebhookController;
@@ -56,7 +57,20 @@ Route::prefix('can')->group(function () {
         ->middleware('force.json')
         ->name('api.can.pronostic');
     Route::get('/pronostic/test', [TwilioStudioController::class, 'testPronostic'])->name('api.can.pronostic.test');
-    
+
+    // Quiz Routes
+    Route::prefix('quiz')->group(function () {
+        Route::post('/check-user', [QuizController::class, 'checkUser'])->name('api.can.quiz.check-user');
+        Route::get('/questions', [QuizController::class, 'getQuestions'])->name('api.can.quiz.questions');
+        Route::get('/questions/formatted', [QuizController::class, 'getQuestionsFormatted'])->name('api.can.quiz.questions.formatted');
+        Route::post('/check-answer', [QuizController::class, 'checkAnswer'])->name('api.can.quiz.check-answer');
+        Route::post('/answer', [QuizController::class, 'saveAnswer'])
+            ->middleware('force.json')
+            ->name('api.can.quiz.answer');
+        Route::post('/history', [QuizController::class, 'getHistory'])->name('api.can.quiz.history');
+        Route::get('/leaderboard', [QuizController::class, 'getLeaderboard'])->name('api.can.quiz.leaderboard');
+    });
+
     // Autres endpoints
     Route::post('/unsubscribe', [TwilioStudioController::class, 'unsubscribe'])->name('api.can.unsubscribe');
     Route::get('/partners', [TwilioStudioController::class, 'getPartners'])->name('api.can.partners');

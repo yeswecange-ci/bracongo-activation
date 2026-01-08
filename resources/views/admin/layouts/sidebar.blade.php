@@ -98,6 +98,45 @@
             <span class="font-medium">Classement</span>
         </a>
 
+        <!-- Quiz - Divider -->
+        <div class="border-t border-gray-700 my-3"></div>
+
+        <!-- Questions Quiz -->
+        <a href="{{ route('admin.quiz.questions.index') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.quiz.questions.*') ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.quiz.questions.*') ? 'text-white' : 'text-gray-400 group-hover:text-purple-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                </path>
+            </svg>
+            <span class="font-medium">Questions Quiz</span>
+        </a>
+
+        <!-- Réponses Quiz -->
+        <a href="{{ route('admin.quiz.answers.index') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.quiz.answers.*') ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.quiz.answers.*') ? 'text-white' : 'text-gray-400 group-hover:text-indigo-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                </path>
+            </svg>
+            <span class="font-medium">Réponses Quiz</span>
+        </a>
+
+        <!-- Classement Quiz -->
+        <a href="{{ route('admin.quiz.leaderboard') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.quiz.leaderboard') ? 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.quiz.leaderboard') ? 'text-white' : 'text-gray-400 group-hover:text-yellow-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                </path>
+            </svg>
+            <span class="font-medium">Classement Quiz</span>
+        </a>
+
+        <!-- Divider -->
+        <div class="border-t border-gray-700 my-3"></div>
+
         <!-- QR Codes -->
         {{-- <a href="{{ route('admin.qrcodes.index') }}"
             class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.qrcodes.*') ? 'bg-gradient-to-r from-cyan-600 to-cyan-700 text-white shadow-lg' : '' }}">

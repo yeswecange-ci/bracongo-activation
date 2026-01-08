@@ -1,0 +1,695 @@
+{
+  "description": "CAN 2025 - Flow Quiz (Jeu de questions-réponses)",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "event": "incomingConversationMessage"
+        },
+        {
+          "event": "incomingRequest"
+        },
+        {
+          "next": "set_phone",
+          "event": "incomingParent"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "set_phone",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_user",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{trigger.message.From}}",
+            "key": "phone_number"
+          }
+        ],
+        "offset": {
+          "x": 200,
+          "y": 200
+        }
+      }
+    },
+    {
+      "name": "http_check_user",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_user_status",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_api",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 400
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/quiz/check-user"
+      }
+    },
+    {
+      "name": "check_user_status",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_user_not_found",
+          "event": "noMatch"
+        },
+        {
+          "next": "http_get_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "User exists",
+              "arguments": [
+                "{{widgets.http_check_user.parsed.status}}"
+              ],
+              "type": "equal_to",
+              "value": "INSCRIT"
+            }
+          ]
+        },
+        {
+          "next": "msg_user_stopped",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "User stopped",
+              "arguments": [
+                "{{widgets.http_check_user.parsed.status}}"
+              ],
+              "type": "equal_to",
+              "value": "STOP"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_check_user.parsed.status}}",
+        "offset": {
+          "x": 200,
+          "y": 650
+        }
+      }
+    },
+    {
+      "name": "msg_user_not_found",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 900
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ *UTILISATEUR NON TROUVÉ*\n\nTu n'es pas encore inscrit.\n\n📝 Pour participer au quiz, tu dois d'abord t'inscrire en scannant un QR code ou en envoyant un message au bot d'inscription.\n\n🍀 À bientôt !"
+      }
+    },
+    {
+      "name": "msg_user_stopped",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 600,
+          "y": 900
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ *COMPTE DÉSACTIVÉ*\n\nTon compte est actuellement désactivé.\n\n📞 Contacte-nous pour plus d'informations."
+      }
+    },
+    {
+      "name": "msg_erreur_api",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 400
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ Une erreur est survenue. Réessaie dans quelques instants."
+      }
+    },
+    {
+      "name": "http_get_question",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_has_questions",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_api",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 1100
+        },
+        "method": "GET",
+        "content_type": "application/x-www-form-urlencoded",
+        "add_twilio_auth": false,
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/quiz/questions/formatted?phone={{flow.variables.phone_number}}"
+      }
+    },
+    {
+      "name": "check_has_questions",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_all_answered",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_display_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Has questions",
+              "arguments": [
+                "{{widgets.http_get_question.parsed.has_questions}}"
+              ],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_get_question.parsed.has_questions}}",
+        "offset": {
+          "x": 200,
+          "y": 1350
+        }
+      }
+    },
+    {
+      "name": "msg_all_answered",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "http_get_history",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 600,
+          "y": 1600
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "{{widgets.http_get_question.parsed.message}}"
+      }
+    },
+    {
+      "name": "msg_display_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "set_answer",
+          "event": "incomingMessage"
+        },
+        {
+          "next": "msg_timeout",
+          "event": "timeout"
+        },
+        {
+          "next": "end_success",
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 1600
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "{{widgets.http_get_question.parsed.message}}",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "msg_timeout",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -600,
+          "y": 1850
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "⏱️ Temps écoulé ! Relance le quiz pour répondre à une nouvelle question."
+      }
+    },
+    {
+      "name": "set_answer",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "check_answer_valid",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.msg_display_question.inbound.Body | upcase}}",
+            "key": "user_answer"
+          }
+        ],
+        "offset": {
+          "x": -200,
+          "y": 1850
+        }
+      }
+    },
+    {
+      "name": "check_answer_valid",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_invalid_answer",
+          "event": "noMatch"
+        },
+        {
+          "next": "http_save_answer",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Answer A",
+              "arguments": [
+                "{{flow.variables.user_answer}}"
+              ],
+              "type": "equal_to",
+              "value": "A"
+            }
+          ]
+        },
+        {
+          "next": "http_save_answer",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Answer B",
+              "arguments": [
+                "{{flow.variables.user_answer}}"
+              ],
+              "type": "equal_to",
+              "value": "B"
+            }
+          ]
+        },
+        {
+          "next": "http_save_answer",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Answer C",
+              "arguments": [
+                "{{flow.variables.user_answer}}"
+              ],
+              "type": "equal_to",
+              "value": "C"
+            }
+          ]
+        },
+        {
+          "next": "http_save_answer",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Answer D",
+              "arguments": [
+                "{{flow.variables.user_answer}}"
+              ],
+              "type": "equal_to",
+              "value": "D"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{flow.variables.user_answer}}",
+        "offset": {
+          "x": -200,
+          "y": 2100
+        }
+      }
+    },
+    {
+      "name": "msg_invalid_answer",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 2350
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ Réponse invalide !\n\nTu dois répondre par A, B, C ou D.\n\n🔄 Relance le quiz pour réessayer."
+      }
+    },
+    {
+      "name": "http_save_answer",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_save_success",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_save",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 2350
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"question_id\":{{widgets.http_get_question.parsed.question.id}},\"answer\":\"{{flow.variables.user_answer}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/quiz/answer"
+      }
+    },
+    {
+      "name": "check_save_success",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_erreur_save",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_result",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Save success",
+              "arguments": [
+                "{{widgets.http_save_answer.parsed.success}}"
+              ],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_save_answer.parsed.success}}",
+        "offset": {
+          "x": -200,
+          "y": 2600
+        }
+      }
+    },
+    {
+      "name": "msg_erreur_save",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 2850
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "{{widgets.http_save_answer.parsed.message}}"
+      }
+    },
+    {
+      "name": "msg_result",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "msg_continue_question",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 2850
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "{{widgets.http_save_answer.parsed.message}}"
+      }
+    },
+    {
+      "name": "msg_continue_question",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "check_continue_response",
+          "event": "incomingMessage"
+        },
+        {
+          "next": "msg_thanks",
+          "event": "timeout"
+        },
+        {
+          "next": "end_success",
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 3100
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "🔥 Veux-tu répondre à une autre question ?\n\n✅ Réponds OUI pour continuer\n❌ Réponds NON pour voir ton historique",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "check_continue_response",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_thanks",
+          "event": "noMatch"
+        },
+        {
+          "next": "http_get_question",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Continue yes",
+              "arguments": [
+                "{{widgets.msg_continue_question.inbound.Body | upcase}}"
+              ],
+              "type": "matches_any_of",
+              "value": "OUI\nYES\nO\nY\n1"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.msg_continue_question.inbound.Body}}",
+        "offset": {
+          "x": -200,
+          "y": 3350
+        }
+      }
+    },
+    {
+      "name": "msg_thanks",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "http_get_history",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 3600
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Merci d'avoir participé ! 🎉\n\n📊 Voici ton historique :"
+      }
+    },
+    {
+      "name": "http_get_history",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "msg_display_history",
+          "event": "success"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 3850
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/quiz/history"
+      }
+    },
+    {
+      "name": "msg_display_history",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 200,
+          "y": 4100
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "{{widgets.http_get_history.parsed.message}}"
+      }
+    },
+    {
+      "name": "end_success",
+      "type": "set-variables",
+      "transitions": [],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "QUIZ_COMPLETE",
+            "key": "flow_status"
+          }
+        ],
+        "offset": {
+          "x": 200,
+          "y": 4350
+        }
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
