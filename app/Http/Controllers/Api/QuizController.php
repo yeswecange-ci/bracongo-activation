@@ -7,7 +7,6 @@ use App\Models\QuizAnswer;
 use App\Models\QuizQuestion;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class QuizController extends Controller
@@ -42,98 +41,16 @@ class QuizController extends Controller
         }
 
         return response()->json([
-            'status'       => 'INSCRIT',
-            'name'         => $user->name,
-            'phone'        => $user->phone,
-            'user_id'      => $user->id,
-            'quiz_score'   => $user->quiz_score ?? 0,
-            'quiz_answers' => $user->quiz_answers_count ?? 0,
-        ]);
-    }
-
-    /**
-     * Endpoint: GET /api/can/quiz/questions
-     * Récupérer les questions actives non répondues par l'utilisateur
-     */
-    public function getQuestions(Request $request)
-    {
-        $validated = $request->validate([
-            'phone' => 'required|string',
-            'limit' => 'nullable|integer|min:1|max:10',
-        ]);
-
-        $phone = $this->formatPhone($validated['phone']);
-        $user  = User::where('phone', $phone)->where('is_active', true)->first();
-
-        if (! $user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur non trouvé.',
-            ], 404);
-        }
-
-        $limit = $validated['limit'] ?? 3;
-
-        // Récupérer les IDs des questions déjà répondues
-        $answeredQuestionIds = QuizAnswer::where('user_id', $user->id)
-            ->pluck('quiz_question_id')
-            ->toArray();
-
-        // Récupérer les questions actives non répondues
-        $questions = QuizQuestion::active()
-            ->whereNotIn('id', $answeredQuestionIds)
-            ->ordered()
-            ->limit($limit)
-            ->get();
-
-        if ($questions->isEmpty()) {
-            // L'utilisateur a répondu à toutes les questions
-            return response()->json([
-                'success'       => true,
-                'has_questions' => false,
-                'all_answered'  => true,
-                'message'       => "🎉 *BRAVO !*\n\n" .
-                                   "Tu as déjà répondu à toutes les questions du quiz !\n\n" .
-                                   "📊 Ton score : {$user->quiz_score} points\n" .
-                                   "✅ Questions répondues : {$user->quiz_answers_count}\n\n" .
-                                   "🏆 Continue de parier sur les matchs pour gagner plus de points !",
-            ]);
-        }
-
-        // Formater les questions pour WhatsApp
-        $message = "🎯 *QUIZ CAN 2025*\n\n";
-        $message .= "Réponds correctement et gagne 10 points par bonne réponse !\n\n";
-        $message .= "📊 Ton score actuel : {$user->quiz_score} points\n\n";
-
-        $formattedQuestions = $questions->map(function ($question, $index) {
-            return [
-                'id'             => $question->id,
-                'number'         => $index + 1,
-                'question'       => $question->question,
-                'option_a'       => $question->option_a,
-                'option_b'       => $question->option_b,
-                'option_c'       => $question->option_c,
-                'option_d'       => $question->option_d,
-                'correct_answer' => $question->correct_answer,
-                'points'         => $question->points,
-            ];
-        });
-
-        return response()->json([
-            'success'       => true,
-            'has_questions' => true,
-            'all_answered'  => false,
-            'count'         => $questions->count(),
-            'total_active'  => QuizQuestion::active()->count(),
-            'user_score'    => $user->quiz_score,
-            'questions'     => $formattedQuestions,
-            'message'       => $message,
+            'status'  => 'INSCRIT',
+            'name'    => $user->name,
+            'phone'   => $user->phone,
+            'user_id' => $user->id,
         ]);
     }
 
     /**
      * Endpoint: GET /api/can/quiz/questions/formatted
-     * Récupérer les questions formatées pour affichage WhatsApp
+     * Récupérer la question formatée pour affichage WhatsApp
      */
     public function getQuestionsFormatted(Request $request)
     {
@@ -167,27 +84,27 @@ class QuizController extends Controller
                 'success'       => true,
                 'has_questions' => false,
                 'all_answered'  => true,
-                'message'       => "🎉 *BRAVO !*\n\n" .
-                                   "Tu as déjà répondu à toutes les questions du quiz !\n\n" .
-                                   "📊 Ton score : {$user->quiz_score} points\n" .
-                                   "✅ Questions répondues : {$user->quiz_answers_count}\n\n" .
-                                   "🏆 Reviens bientôt pour de nouvelles questions !",
+                'message'       => "🎉 *MERCI CHAMPION !*\n\n" .
+                                   "Tu as déjà participé au Quiz Flash Ndembo City ! ✅\n\n" .
+                                   "📍 Rendez-vous ce samedi dès 16h au Village Foot du Parc Maman Marthe (4ème Rue Limete Résidentiel) pour la remise de cadeaux ! 🎁\n\n" .
+                                   "L'équipe Bracongo 🔥",
             ]);
         }
 
         // Formater la question pour WhatsApp
-        $message = "🎯 *QUESTION QUIZ*\n\n";
-        $message .= "📊 Ton score : {$user->quiz_score} points\n\n";
-        $message .= "{$question->question}\n\n";
-        $message .= "1. {$question->option_a}\n";
-        $message .= "2. {$question->option_b}\n";
-        $message .= "3. {$question->option_c}\n";
+        $message = "*QUIZ FLASH NDEMBO CITY !* ⚽🔥\n\n";
+        $message .= "Salut Champion !\n\n";
+        $message .= "On teste tes connaissances aujourd'hui pour faire grimper ton score ! 📈\n\n";
+        $message .= "*Question :* {$question->question} 🤔\n\n";
+        $message .= "1️⃣ {$question->option_a}\n";
+        $message .= "2️⃣ {$question->option_b}\n";
+        $message .= "3️⃣ {$question->option_c}\n";
 
         if ($question->option_d) {
-            $message .= "4. {$question->option_d}\n";
+            $message .= "4️⃣ {$question->option_d}\n";
         }
 
-        $message .= "\n💡 Réponds par 1, 2, 3" . ($question->option_d ? " ou 4" : "") . " !";
+        $message .= "\n_(Réponds simplement en tapant le chiffre 1, 2, 3" . ($question->option_d ? " ou 4" : "") . " ! ⚠️ Attention aux chiffres)_";
 
         return response()->json([
             'success'       => true,
@@ -242,11 +159,11 @@ class QuizController extends Controller
 
         return response()->json([
             'has_answered'  => true,
-            'answer'        => $this->convertLetterToNumber($answer->answer),
-            'is_correct'    => $answer->is_correct,
-            'points_won'    => $answer->points_won,
             'answered_at'   => $answer->answered_at->format('d/m/Y à H:i'),
-            'message'       => 'Réponse déjà enregistrée',
+            'message'       => "🎉 *MERCI CHAMPION !*\n\n" .
+                               "Tu as déjà participé au Quiz Flash Ndembo City ! ✅\n\n" .
+                               "📍 Rendez-vous ce samedi dès 16h au Village Foot du Parc Maman Marthe (4ème Rue Limete Résidentiel) pour la remise de cadeaux ! 🎁\n\n" .
+                               "L'équipe Bracongo 🔥",
         ]);
     }
 
@@ -291,23 +208,19 @@ class QuizController extends Controller
             ->first();
 
         if ($existingAnswer) {
-            $resultText = $existingAnswer->is_correct ? "✅ Bonne réponse" : "❌ Mauvaise réponse";
-
             return response()->json([
                 'success' => false,
-                'message' => "🚫 *TU AS DÉJÀ RÉPONDU*\n\n" .
-                             "{$question->question}\n\n" .
-                             "📊 Ta réponse : " . $this->convertLetterToNumber($existingAnswer->answer) . "\n" .
-                             "{$resultText} ({$existingAnswer->points_won} points)\n" .
-                             "📅 Répondu le : " . $existingAnswer->answered_at->format('d/m/Y à H:i') . "\n\n" .
-                             "❌ Tu ne peux répondre qu'une seule fois !",
+                'message' => "🎉 *MERCI CHAMPION !*\n\n" .
+                             "Tu as déjà participé au Quiz Flash Ndembo City ! ✅\n\n" .
+                             "📍 Rendez-vous ce samedi dès 16h au Village Foot du Parc Maman Marthe (4ème Rue Limete Résidentiel) pour la remise de cadeaux ! 🎁\n\n" .
+                             "L'équipe Bracongo 🔥",
             ], 400);
         }
 
         // Convertir la réponse numérique en lettre pour comparaison
         $answerLetter = $this->convertNumberToLetter($validated['answer']);
 
-        // Vérifier si la réponse est correcte
+        // Vérifier si la réponse est correcte (pour les stats internes)
         $isCorrect = ($answerLetter === $question->correct_answer);
         $pointsWon = $isCorrect ? $question->points : 0;
 
@@ -321,23 +234,16 @@ class QuizController extends Controller
             'answered_at'       => now(),
         ]);
 
-        // Mettre à jour le score de l'utilisateur
+        // Mettre à jour le score de l'utilisateur (pour les stats internes)
         $user->increment('quiz_score', $pointsWon);
         $user->increment('quiz_answers_count');
 
-        // Préparer le message de réponse
-        if ($isCorrect) {
-            $message = "✅ *BRAVO !*\n\n" .
-                       "Ta réponse est correcte !\n\n" .
-                       "🎯 Points gagnés : +{$pointsWon} points\n" .
-                       "📊 Ton score total : {$user->quiz_score} points\n\n" .
-                       "🔥 Continue comme ça !";
-        } else {
-            $message = "❌ *DOMMAGE !*\n\n" .
-                       "La bonne réponse était : " . $this->convertLetterToNumber($question->correct_answer) . "\n\n" .
-                       "📊 Ton score : {$user->quiz_score} points\n\n" .
-                       "💪 Ne te décourage pas, continue !";
-        }
+        // Message de confirmation uniforme (ne révèle pas si c'est correct)
+        $message = "*Réponse enregistrée !* ✅\n\n" .
+                   "Merci de ta participation !\n\n" .
+                   "On se donne rendez-vous ce samedi dès 16h au Village Foot du Parc Maman Marthe (4ème Rue Limete Résidentiel) pour une remise de cadeaux exceptionnelle à nos premiers gagnants ! 🥳📱🎁\n\n" .
+                   "Continue de participer et reste au top du classement ! 🚀\n\n" .
+                   "L'équipe Bracongo.";
 
         Log::info('Quiz answer saved', [
             'user_id'     => $user->id,
@@ -348,18 +254,12 @@ class QuizController extends Controller
         ]);
 
         return response()->json([
-            'success'    => true,
-            'is_correct' => $isCorrect,
-            'points_won' => $pointsWon,
-            'user_score' => $user->quiz_score,
-            'message'    => $message,
-            'answer'     => [
-                'id'            => $answer->id,
-                'question'      => $question->question,
-                'your_answer'   => $validated['answer'],
-                'correct_answer'=> $this->convertLetterToNumber($question->correct_answer),
-                'is_correct'    => $isCorrect,
-                'points'        => $pointsWon,
+            'success' => true,
+            'message' => $message,
+            'answer'  => [
+                'id'         => $answer->id,
+                'question'   => $question->question,
+                'your_answer'=> $validated['answer'],
             ],
         ], 200, [
             'Content-Type' => 'application/json; charset=utf-8',
@@ -367,91 +267,12 @@ class QuizController extends Controller
     }
 
     /**
-     * Endpoint: POST /api/can/quiz/history
-     * Récupérer l'historique des réponses de l'utilisateur
-     */
-    public function getHistory(Request $request)
-    {
-        $validated = $request->validate([
-            'phone' => 'required|string',
-        ]);
-
-        $phone = $this->formatPhone($validated['phone']);
-        $user  = User::where('phone', $phone)->where('is_active', true)->first();
-
-        if (! $user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Utilisateur non trouvé.',
-            ], 404);
-        }
-
-        $answers = QuizAnswer::where('user_id', $user->id)
-            ->with('question')
-            ->orderBy('answered_at', 'desc')
-            ->get();
-
-        if ($answers->isEmpty()) {
-            return response()->json([
-                'success'     => true,
-                'has_answers' => false,
-                'message'     => "📊 *TON HISTORIQUE*\n\n" .
-                                 "Tu n'as pas encore répondu au quiz.\n\n" .
-                                 "🎯 Commence maintenant et gagne des points !",
-            ]);
-        }
-
-        // Construire le message d'historique
-        $message = "📊 *TON HISTORIQUE QUIZ*\n\n";
-        $message .= "🏆 Score total : {$user->quiz_score} points\n";
-        $message .= "✅ Réponses correctes : " . $answers->where('is_correct', true)->count() . "\n";
-        $message .= "❌ Réponses incorrectes : " . $answers->where('is_correct', false)->count() . "\n\n";
-        $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
-
-        foreach ($answers as $index => $answer) {
-            $question = $answer->question;
-            $number = $index + 1;
-            $icon = $answer->is_correct ? "✅" : "❌";
-
-            $message .= "{$number}. {$icon} {$question->question}\n";
-            $message .= "   Ta réponse : " . $this->convertLetterToNumber($answer->answer) . "\n";
-
-            if (!$answer->is_correct) {
-                $message .= "   Bonne réponse : " . $this->convertLetterToNumber($question->correct_answer) . "\n";
-            }
-
-            $message .= "   Points : {$answer->points_won}\n";
-            $message .= "   Date : " . $answer->answered_at->format('d/m à H:i') . "\n\n";
-        }
-
-        return response()->json([
-            'success'          => true,
-            'has_answers'      => true,
-            'total_score'      => $user->quiz_score,
-            'total_answers'    => $answers->count(),
-            'correct_answers'  => $answers->where('is_correct', true)->count(),
-            'wrong_answers'    => $answers->where('is_correct', false)->count(),
-            'message'          => $message,
-            'answers'          => $answers->map(function ($answer) {
-                return [
-                    'question'       => $answer->question->question,
-                    'your_answer'    => $this->convertLetterToNumber($answer->answer),
-                    'correct_answer' => $this->convertLetterToNumber($answer->question->correct_answer),
-                    'is_correct'     => $answer->is_correct,
-                    'points_won'     => $answer->points_won,
-                    'answered_at'    => $answer->answered_at->format('d/m/Y à H:i'),
-                ];
-            }),
-        ]);
-    }
-
-    /**
      * Endpoint: GET /api/can/quiz/leaderboard
-     * Récupérer le classement des joueurs
+     * Récupérer le classement des joueurs (pour usage interne/admin)
      */
     public function getLeaderboard(Request $request)
     {
-        $limit = $request->input('limit', 10);
+        $limit = $request->input('limit', 50);
 
         $topUsers = User::where('is_active', true)
             ->where('quiz_score', '>', 0)
@@ -462,56 +283,21 @@ class QuizController extends Controller
 
         if ($topUsers->isEmpty()) {
             return response()->json([
-                'success'        => true,
-                'has_leaderboard'=> false,
-                'message'        => "🏆 *CLASSEMENT QUIZ*\n\n" .
-                                    "Le classement est vide pour le moment.\n\n" .
-                                    "🎯 Sois le premier à jouer !",
+                'success'         => true,
+                'has_leaderboard' => false,
+                'message'         => 'Aucun participant pour le moment.',
             ]);
-        }
-
-        // Construire le message du classement
-        $message = "🏆 *CLASSEMENT QUIZ CAN 2025*\n\n";
-        $message .= "🔝 Top {$topUsers->count()} joueurs\n\n";
-
-        foreach ($topUsers as $index => $user) {
-            $position = $index + 1;
-            $medal = match($position) {
-                1 => "🥇",
-                2 => "🥈",
-                3 => "🥉",
-                default => "{$position}.",
-            };
-
-            $message .= "{$medal} {$user->name}\n";
-            $message .= "   📊 {$user->quiz_score} points ({$user->quiz_answers_count} réponses)\n\n";
-        }
-
-        // Position de l'utilisateur actuel si disponible
-        if ($request->has('phone')) {
-            $phone = $this->formatPhone($request->input('phone'));
-            $currentUser = User::where('phone', $phone)->first();
-
-            if ($currentUser && $currentUser->quiz_score > 0) {
-                $userPosition = User::where('is_active', true)
-                    ->where('quiz_score', '>', $currentUser->quiz_score)
-                    ->count() + 1;
-
-                $message .= "━━━━━━━━━━━━━━━━━━━━\n";
-                $message .= "📍 Ta position : #{$userPosition}\n";
-                $message .= "📊 Ton score : {$currentUser->quiz_score} points\n";
-            }
         }
 
         return response()->json([
             'success'         => true,
             'has_leaderboard' => true,
             'count'           => $topUsers->count(),
-            'message'         => $message,
             'leaderboard'     => $topUsers->map(function ($user, $index) {
                 return [
                     'position' => $index + 1,
                     'name'     => $user->name,
+                    'phone'    => $user->phone,
                     'score'    => $user->quiz_score,
                     'answers'  => $user->quiz_answers_count,
                 ];
@@ -530,20 +316,6 @@ class QuizController extends Controller
             '3' => 'C',
             '4' => 'D',
             default => $number,
-        };
-    }
-
-    /**
-     * Convertir une lettre (A,B,C,D) en chiffre (1,2,3,4)
-     */
-    private function convertLetterToNumber(string $letter): string
-    {
-        return match($letter) {
-            'A' => '1',
-            'B' => '2',
-            'C' => '3',
-            'D' => '4',
-            default => $letter,
         };
     }
 
