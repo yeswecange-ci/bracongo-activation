@@ -178,7 +178,7 @@ class QuizController extends Controller
         // Formater la question pour WhatsApp
         $message = "🎯 *QUESTION QUIZ*\n\n";
         $message .= "📊 Ton score : {$user->quiz_score} points\n\n";
-        $message .= "❓ {$question->question}\n\n";
+        $message .= "{$question->question}\n\n";
         $message .= "1. {$question->option_a}\n";
         $message .= "2. {$question->option_b}\n";
         $message .= "3. {$question->option_c}\n";
@@ -242,7 +242,7 @@ class QuizController extends Controller
 
         return response()->json([
             'has_answered'  => true,
-            'answer'        => $answer->answer,
+            'answer'        => $this->convertLetterToNumber($answer->answer),
             'is_correct'    => $answer->is_correct,
             'points_won'    => $answer->points_won,
             'answered_at'   => $answer->answered_at->format('d/m/Y à H:i'),
@@ -296,8 +296,8 @@ class QuizController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => "🚫 *TU AS DÉJÀ RÉPONDU*\n\n" .
-                             "❓ {$question->question}\n\n" .
-                             "📊 Ta réponse : {$existingAnswer->answer}\n" .
+                             "{$question->question}\n\n" .
+                             "📊 Ta réponse : " . $this->convertLetterToNumber($existingAnswer->answer) . "\n" .
                              "{$resultText} ({$existingAnswer->points_won} points)\n" .
                              "📅 Répondu le : " . $existingAnswer->answered_at->format('d/m/Y à H:i') . "\n\n" .
                              "❌ Tu ne peux répondre qu'une seule fois !",
@@ -334,7 +334,7 @@ class QuizController extends Controller
                        "🔥 Continue comme ça !";
         } else {
             $message = "❌ *DOMMAGE !*\n\n" .
-                       "La bonne réponse était : {$question->correct_answer}\n\n" .
+                       "La bonne réponse était : " . $this->convertLetterToNumber($question->correct_answer) . "\n\n" .
                        "📊 Ton score : {$user->quiz_score} points\n\n" .
                        "💪 Ne te décourage pas, continue !";
         }
@@ -357,7 +357,7 @@ class QuizController extends Controller
                 'id'            => $answer->id,
                 'question'      => $question->question,
                 'your_answer'   => $validated['answer'],
-                'correct_answer'=> $question->correct_answer,
+                'correct_answer'=> $this->convertLetterToNumber($question->correct_answer),
                 'is_correct'    => $isCorrect,
                 'points'        => $pointsWon,
             ],
@@ -414,10 +414,10 @@ class QuizController extends Controller
             $icon = $answer->is_correct ? "✅" : "❌";
 
             $message .= "{$number}. {$icon} {$question->question}\n";
-            $message .= "   Ta réponse : {$answer->answer}\n";
+            $message .= "   Ta réponse : " . $this->convertLetterToNumber($answer->answer) . "\n";
 
             if (!$answer->is_correct) {
-                $message .= "   Bonne réponse : {$question->correct_answer}\n";
+                $message .= "   Bonne réponse : " . $this->convertLetterToNumber($question->correct_answer) . "\n";
             }
 
             $message .= "   Points : {$answer->points_won}\n";
@@ -435,8 +435,8 @@ class QuizController extends Controller
             'answers'          => $answers->map(function ($answer) {
                 return [
                     'question'       => $answer->question->question,
-                    'your_answer'    => $answer->answer,
-                    'correct_answer' => $answer->question->correct_answer,
+                    'your_answer'    => $this->convertLetterToNumber($answer->answer),
+                    'correct_answer' => $this->convertLetterToNumber($answer->question->correct_answer),
                     'is_correct'     => $answer->is_correct,
                     'points_won'     => $answer->points_won,
                     'answered_at'    => $answer->answered_at->format('d/m/Y à H:i'),
@@ -530,6 +530,20 @@ class QuizController extends Controller
             '3' => 'C',
             '4' => 'D',
             default => $number,
+        };
+    }
+
+    /**
+     * Convertir une lettre (A,B,C,D) en chiffre (1,2,3,4)
+     */
+    private function convertLetterToNumber(string $letter): string
+    {
+        return match($letter) {
+            'A' => '1',
+            'B' => '2',
+            'C' => '3',
+            'D' => '4',
+            default => $letter,
         };
     }
 
