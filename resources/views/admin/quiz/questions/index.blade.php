@@ -96,11 +96,11 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="text-sm font-medium text-gray-900 truncate max-w-md">{{ $question->question }}</p>
                                         <div class="mt-2 space-y-1">
-                                            <p class="text-xs text-gray-600">A. {{ $question->option_a }}</p>
-                                            <p class="text-xs text-gray-600">B. {{ $question->option_b }}</p>
-                                            <p class="text-xs text-gray-600">C. {{ $question->option_c }}</p>
+                                            <p class="text-xs text-gray-600">1. {{ $question->option_a }}</p>
+                                            <p class="text-xs text-gray-600">2. {{ $question->option_b }}</p>
+                                            <p class="text-xs text-gray-600">3. {{ $question->option_c }}</p>
                                             @if($question->option_d)
-                                                <p class="text-xs text-gray-600">D. {{ $question->option_d }}</p>
+                                                <p class="text-xs text-gray-600">4. {{ $question->option_d }}</p>
                                             @endif
                                         </div>
                                     </div>
@@ -108,7 +108,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <span class="inline-flex items-center justify-center w-10 h-10 bg-green-100 text-green-800 rounded-full font-bold text-lg">
-                                    {{ $question->correct_answer }}
+                                    {{ ['A' => '1', 'B' => '2', 'C' => '3', 'D' => '4'][$question->correct_answer] ?? $question->correct_answer }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">

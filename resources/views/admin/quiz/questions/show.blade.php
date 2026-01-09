@@ -31,7 +31,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex items-center p-3 rounded-lg border {{ $question->correct_answer == 'A' ? 'border-green-500 bg-green-50' : 'border-gray-200' }}">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'A' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">A</span>
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'A' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">1</span>
                 <span class="text-gray-700">{{ $question->option_a }}</span>
                 @if($question->correct_answer == 'A')
                     <svg class="w-5 h-5 text-green-500 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
                 @endif
             </div>
             <div class="flex items-center p-3 rounded-lg border {{ $question->correct_answer == 'B' ? 'border-green-500 bg-green-50' : 'border-gray-200' }}">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'B' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">B</span>
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'B' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">2</span>
                 <span class="text-gray-700">{{ $question->option_b }}</span>
                 @if($question->correct_answer == 'B')
                     <svg class="w-5 h-5 text-green-500 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,7 +49,7 @@
                 @endif
             </div>
             <div class="flex items-center p-3 rounded-lg border {{ $question->correct_answer == 'C' ? 'border-green-500 bg-green-50' : 'border-gray-200' }}">
-                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'C' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">C</span>
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'C' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">3</span>
                 <span class="text-gray-700">{{ $question->option_c }}</span>
                 @if($question->correct_answer == 'C')
                     <svg class="w-5 h-5 text-green-500 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@
             </div>
             @if($question->option_d)
                 <div class="flex items-center p-3 rounded-lg border {{ $question->correct_answer == 'D' ? 'border-green-500 bg-green-50' : 'border-gray-200' }}">
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'D' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">D</span>
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full {{ $question->correct_answer == 'D' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600' }} font-bold mr-3">4</span>
                     <span class="text-gray-700">{{ $question->option_d }}</span>
                     @if($question->correct_answer == 'D')
                         <svg class="w-5 h-5 text-green-500 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,15 +154,15 @@
         <div class="bg-white rounded-lg shadow p-6">
             <h4 class="text-lg font-semibold text-gray-900 mb-4">Distribution des Réponses</h4>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                @foreach(['A', 'B', 'C', 'D'] as $option)
+                @foreach(['A' => '1', 'B' => '2', 'C' => '3', 'D' => '4'] as $letter => $number)
                     @php
-                        $dist = $distribution->firstWhere('answer', $option);
+                        $dist = $distribution->firstWhere('answer', $letter);
                         $count = $dist->count ?? 0;
                         $percentage = $stats['total_answers'] > 0 ? round(($count / $stats['total_answers']) * 100, 1) : 0;
                     @endphp
                     <div class="border border-gray-200 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-lg font-bold text-gray-900">Option {{ $option }}</span>
+                            <span class="text-lg font-bold text-gray-900">Option {{ $number }}</span>
                             <span class="text-sm text-gray-500">{{ $count }} réponses</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
@@ -201,7 +201,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-800 font-bold">
-                                        {{ $answer->answer }}
+                                        {{ ['A' => '1', 'B' => '2', 'C' => '3', 'D' => '4'][$answer->answer] ?? $answer->answer }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">

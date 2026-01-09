@@ -161,7 +161,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 <span class="inline-flex items-center justify-center w-10 h-10 rounded-full {{ $answer->is_correct ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }} font-bold">
-                                    {{ $answer->answer }}
+                                    {{ ['A' => '1', 'B' => '2', 'C' => '3', 'D' => '4'][$answer->answer] ?? $answer->answer }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">

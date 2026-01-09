@@ -29,10 +29,10 @@
 
             <!-- Options -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- Option A -->
+                <!-- Option 1 -->
                 <div>
                     <label for="option_a" class="block text-sm font-medium text-gray-700 mb-2">
-                        Option A <span class="text-red-500">*</span>
+                        Option 1 <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -48,10 +48,10 @@
                     @enderror
                 </div>
 
-                <!-- Option B -->
+                <!-- Option 2 -->
                 <div>
                     <label for="option_b" class="block text-sm font-medium text-gray-700 mb-2">
-                        Option B <span class="text-red-500">*</span>
+                        Option 2 <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -67,10 +67,10 @@
                     @enderror
                 </div>
 
-                <!-- Option C -->
+                <!-- Option 3 -->
                 <div>
                     <label for="option_c" class="block text-sm font-medium text-gray-700 mb-2">
-                        Option C <span class="text-red-500">*</span>
+                        Option 3 <span class="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -86,10 +86,10 @@
                     @enderror
                 </div>
 
-                <!-- Option D (optionnelle) -->
+                <!-- Option 4 (optionnelle) -->
                 <div>
                     <label for="option_d" class="block text-sm font-medium text-gray-700 mb-2">
-                        Option D (optionnelle)
+                        Option 4 (optionnelle)
                     </label>
                     <input
                         type="text"
@@ -118,10 +118,10 @@
                         required
                     >
                         <option value="">Sélectionnez...</option>
-                        <option value="A" {{ old('correct_answer') == 'A' ? 'selected' : '' }}>A</option>
-                        <option value="B" {{ old('correct_answer') == 'B' ? 'selected' : '' }}>B</option>
-                        <option value="C" {{ old('correct_answer') == 'C' ? 'selected' : '' }}>C</option>
-                        <option value="D" {{ old('correct_answer') == 'D' ? 'selected' : '' }}>D</option>
+                        <option value="A" {{ old('correct_answer') == 'A' ? 'selected' : '' }}>1</option>
+                        <option value="B" {{ old('correct_answer') == 'B' ? 'selected' : '' }}>2</option>
+                        <option value="C" {{ old('correct_answer') == 'C' ? 'selected' : '' }}>3</option>
+                        <option value="D" {{ old('correct_answer') == 'D' ? 'selected' : '' }}>4</option>
                     </select>
                     @error('correct_answer')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
