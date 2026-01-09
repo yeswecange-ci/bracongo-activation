@@ -179,15 +179,15 @@ class QuizController extends Controller
         $message = "🎯 *QUESTION QUIZ*\n\n";
         $message .= "📊 Ton score : {$user->quiz_score} points\n\n";
         $message .= "❓ {$question->question}\n\n";
-        $message .= "A. {$question->option_a}\n";
-        $message .= "B. {$question->option_b}\n";
-        $message .= "C. {$question->option_c}\n";
+        $message .= "1. {$question->option_a}\n";
+        $message .= "2. {$question->option_b}\n";
+        $message .= "3. {$question->option_c}\n";
 
         if ($question->option_d) {
-            $message .= "D. {$question->option_d}\n";
+            $message .= "4. {$question->option_d}\n";
         }
 
-        $message .= "\n💡 Réponds par A, B, C" . ($question->option_d ? " ou D" : "") . " !";
+        $message .= "\n💡 Réponds par 1, 2, 3" . ($question->option_d ? " ou 4" : "") . " !";
 
         return response()->json([
             'success'       => true,
@@ -197,10 +197,10 @@ class QuizController extends Controller
                 'id'       => $question->id,
                 'question' => $question->question,
                 'options'  => [
-                    'A' => $question->option_a,
-                    'B' => $question->option_b,
-                    'C' => $question->option_c,
-                    'D' => $question->option_d,
+                    '1' => $question->option_a,
+                    '2' => $question->option_b,
+                    '3' => $question->option_c,
+                    '4' => $question->option_d,
                 ],
                 'points'   => $question->points,
             ],
@@ -263,7 +263,7 @@ class QuizController extends Controller
         $validated = $request->validate([
             'phone'       => 'required|string',
             'question_id' => 'required|integer|exists:quiz_questions,id',
-            'answer'      => 'required|in:A,B,C,D',
+            'answer'      => 'required|in:1,2,3,4',
         ]);
 
         $phone = $this->formatPhone($validated['phone']);
@@ -304,8 +304,11 @@ class QuizController extends Controller
             ], 400);
         }
 
+        // Convertir la réponse numérique en lettre pour comparaison
+        $answerLetter = $this->convertNumberToLetter($validated['answer']);
+
         // Vérifier si la réponse est correcte
-        $isCorrect = ($validated['answer'] === $question->correct_answer);
+        $isCorrect = ($answerLetter === $question->correct_answer);
         $pointsWon = $isCorrect ? $question->points : 0;
 
         // Enregistrer la réponse
@@ -514,6 +517,20 @@ class QuizController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * Convertir un chiffre (1,2,3,4) en lettre (A,B,C,D)
+     */
+    private function convertNumberToLetter(string $number): string
+    {
+        return match($number) {
+            '1' => 'A',
+            '2' => 'B',
+            '3' => 'C',
+            '4' => 'D',
+            default => $number,
+        };
     }
 
     /**
