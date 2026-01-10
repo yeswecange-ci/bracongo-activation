@@ -135,7 +135,8 @@ class QuizAnswerController extends Controller
      */
     public function export(Request $request)
     {
-        $type = $request->input('type', 'all'); // all, leaderboard, answers
+        $type = $request->input('type', 'all'); // all, leaderboard, answers, winners
+        $limit = $request->input('limit', 50); // Pour l'export des gagnants
 
         $filename = 'quiz_' . $type . '_' . now()->format('Y-m-d_His') . '.csv';
 
@@ -147,7 +148,7 @@ class QuizAnswerController extends Controller
             'Expires' => '0',
         ];
 
-        $callback = function () use ($type) {
+        $callback = function () use ($type, $limit) {
             $file = fopen('php://output', 'w');
 
             // BOM UTF-8 pour Excel
@@ -163,6 +164,36 @@ class QuizAnswerController extends Controller
                     }])
                     ->orderBy('quiz_score', 'desc')
                     ->orderBy('quiz_answers_count', 'desc')
+                    ->get();
+
+                foreach ($users as $index => $user) {
+                    $incorrect = $user->quiz_answers_count - $user->correct_answers;
+                    $accuracy = $user->quiz_answers_count > 0
+                        ? round(($user->correct_answers / $user->quiz_answers_count) * 100, 2) . '%'
+                        : '0%';
+
+                    fputcsv($file, [
+                        $index + 1,
+                        $user->name,
+                        $user->phone,
+                        $user->quiz_score,
+                        $user->quiz_answers_count,
+                        $user->correct_answers,
+                        $incorrect,
+                        $accuracy,
+                    ]);
+                }
+            } elseif ($type === 'winners') {
+                // Export des gagnants (Top N joueurs)
+                fputcsv($file, ['Rang', 'Nom', 'Téléphone', 'Score', 'Réponses', 'Correct', 'Incorrect', 'Taux de réussite']);
+
+                $users = User::where('quiz_score', '>', 0)
+                    ->withCount(['quizAnswers', 'quizAnswers as correct_answers' => function ($q) {
+                        $q->where('is_correct', true);
+                    }])
+                    ->orderBy('quiz_score', 'desc')
+                    ->orderBy('quiz_answers_count', 'desc')
+                    ->limit($limit)
                     ->get();
 
                 foreach ($users as $index => $user) {

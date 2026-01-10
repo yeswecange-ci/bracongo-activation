@@ -153,11 +153,63 @@ class QuizQuestionController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $validated['points'] = $validated['points'] ?? 10;
 
+        // Sauvegarder l'ancienne réponse correcte et les points
+        $oldCorrectAnswer = $question->correct_answer;
+        $oldPoints = $question->points;
+
+        // Mettre à jour la question
         $question->update($validated);
+
+        // Si la réponse correcte ou les points ont changé, recalculer les réponses existantes
+        if ($oldCorrectAnswer !== $validated['correct_answer'] || $oldPoints !== $validated['points']) {
+            $this->recalculateAnswersAndScores($question, $oldCorrectAnswer, $oldPoints);
+        }
 
         return redirect()
             ->route('admin.quiz.questions.index')
-            ->with('success', 'Question mise à jour avec succès !');
+            ->with('success', 'Question mise à jour avec succès ! Les réponses et scores ont été recalculés.');
+    }
+
+    /**
+     * Recalculate all existing answers and user scores for a question
+     */
+    private function recalculateAnswersAndScores(QuizQuestion $question, $oldCorrectAnswer, $oldPoints)
+    {
+        DB::beginTransaction();
+
+        try {
+            // Récupérer toutes les réponses pour cette question
+            $answers = $question->answers()->with('user')->get();
+
+            foreach ($answers as $answer) {
+                // Calculer l'ancien statut et points pour déduction
+                $wasCorrect = ($answer->answer === $oldCorrectAnswer);
+                $oldPointsWon = $wasCorrect ? $oldPoints : 0;
+
+                // Calculer le nouveau statut et points
+                $isNowCorrect = ($answer->answer === $question->correct_answer);
+                $newPointsWon = $isNowCorrect ? $question->points : 0;
+
+                // Mettre à jour la réponse
+                $answer->update([
+                    'is_correct' => $isNowCorrect,
+                    'points_won' => $newPointsWon,
+                ]);
+
+                // Recalculer le score de l'utilisateur
+                // Soustraire les anciens points et ajouter les nouveaux
+                $pointsDifference = $newPointsWon - $oldPointsWon;
+
+                if ($pointsDifference !== 0) {
+                    $answer->user->increment('quiz_score', $pointsDifference);
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     /**
