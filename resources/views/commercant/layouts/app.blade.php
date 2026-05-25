@@ -20,7 +20,7 @@
     <aside class="sidebar-bg hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 z-30 shadow-2xl">
         <div class="p-6 border-b border-white/10">
             <div class="flex items-center gap-3">
-                <span class="text-3xl">🍷</span>
+                <img src="{{ asset('images/lck-logo.jpeg') }}" alt="LCK" class="h-10 w-10 rounded-lg object-contain bg-white/10 p-0.5 flex-shrink-0">
                 <div>
                     <p class="text-white font-bold text-sm leading-tight">La Clé des Châteaux</p>
                     <p class="text-yellow-500 text-xs">Espace équipe</p>
@@ -90,10 +90,8 @@
     <header class="lg:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div class="flex items-center justify-between px-4 py-3">
             <div class="flex items-center gap-2">
-                <span class="text-xl">🍷</span>
-                <div>
-                    <p class="font-bold text-gray-900 text-sm leading-tight">La Clé des Châteaux</p>
-                </div>
+                <img src="{{ asset('images/lck-logo.jpeg') }}" alt="LCK" class="h-8 w-8 rounded-md object-contain">
+                <p class="font-bold text-gray-900 text-sm leading-tight">La Clé des Châteaux</p>
             </div>
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-white font-bold text-xs">

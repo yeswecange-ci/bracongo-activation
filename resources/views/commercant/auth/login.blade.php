@@ -15,9 +15,8 @@
 
         {{-- Logo --}}
         <div class="text-center mb-10">
-            <div class="text-7xl mb-5">🍷</div>
-            <h1 class="text-3xl font-black text-white tracking-tight">La Clé des Châteaux</h1>
-            <p class="text-yellow-500 text-sm mt-2 font-semibold tracking-widest uppercase">Espace équipe</p>
+            <img src="{{ asset('images/lck-logo.jpeg') }}" alt="La Clé des Châteaux" class="h-24 mx-auto mb-4 object-contain">
+            <p class="text-yellow-500 text-sm font-semibold tracking-widest uppercase">Espace équipe</p>
         </div>
 
         {{-- Card --}}
