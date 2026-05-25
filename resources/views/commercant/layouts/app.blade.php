@@ -18,14 +18,9 @@
 
     {{-- ══════════════ DESKTOP SIDEBAR (lg+) ══════════════ --}}
     <aside class="sidebar-bg hidden lg:flex flex-col fixed inset-y-0 left-0 w-64 z-30 shadow-2xl">
-        <div class="p-6 border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <img src="{{ asset('images/lck-logo.jpeg') }}" alt="LCK" class="h-10 w-10 rounded-lg object-contain bg-white/10 p-0.5 flex-shrink-0">
-                <div>
-                    <p class="text-white font-bold text-sm leading-tight">La Clé des Châteaux</p>
-                    <p class="text-yellow-500 text-xs">Espace équipe</p>
-                </div>
-            </div>
+        <div class="px-6 py-5 border-b border-white/10">
+            <img src="{{ asset('images/lck-logo.jpeg') }}" alt="La Clé des Châteaux" class="h-14 object-contain">
+            <p class="text-yellow-500 text-xs mt-2">Espace équipe</p>
         </div>
 
         <div class="px-5 py-4 border-b border-white/10">
@@ -89,9 +84,8 @@
     {{-- ══════════════ MOBILE TOP BAR ══════════════ --}}
     <header class="lg:hidden fixed top-0 inset-x-0 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div class="flex items-center justify-between px-4 py-3">
-            <div class="flex items-center gap-2">
-                <img src="{{ asset('images/lck-logo.jpeg') }}" alt="LCK" class="h-8 w-8 rounded-md object-contain">
-                <p class="font-bold text-gray-900 text-sm leading-tight">La Clé des Châteaux</p>
+            <div class="flex items-center">
+                <img src="{{ asset('images/lck-logo.jpeg') }}" alt="La Clé des Châteaux" class="h-9 object-contain">
             </div>
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-full bg-yellow-600 flex items-center justify-center text-white font-bold text-xs">
