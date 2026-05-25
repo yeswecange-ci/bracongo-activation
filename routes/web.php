@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Commercant\AuthController as CommercantAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -187,5 +188,76 @@ Route::prefix('admin')->group(function () {
             ->name('admin.quiz.leaderboard');
         Route::get('quiz/export', [\App\Http\Controllers\Admin\QuizAnswerController::class, 'export'])
             ->name('admin.quiz.export');
+
+        // ── La Clé des Châteaux ───────────────────────────────────
+        Route::prefix('lck')->group(function () {
+            // Commandes
+            Route::get('orders', [\App\Http\Controllers\Admin\LckOrderController::class, 'index'])
+                ->name('admin.lck.orders.index');
+            Route::get('orders/{ref}', [\App\Http\Controllers\Admin\LckOrderController::class, 'show'])
+                ->name('admin.lck.orders.show');
+
+            // Produits
+            Route::get('products', [\App\Http\Controllers\Admin\LckProductController::class, 'index'])
+                ->name('admin.lck.products.index');
+            Route::get('products/create', [\App\Http\Controllers\Admin\LckProductController::class, 'create'])
+                ->name('admin.lck.products.create');
+            Route::post('products', [\App\Http\Controllers\Admin\LckProductController::class, 'store'])
+                ->name('admin.lck.products.store');
+            Route::get('products/{product}/edit', [\App\Http\Controllers\Admin\LckProductController::class, 'edit'])
+                ->name('admin.lck.products.edit');
+            Route::put('products/{product}', [\App\Http\Controllers\Admin\LckProductController::class, 'update'])
+                ->name('admin.lck.products.update');
+            Route::delete('products/{product}', [\App\Http\Controllers\Admin\LckProductController::class, 'destroy'])
+                ->name('admin.lck.products.destroy');
+            Route::post('products/{product}/toggle', [\App\Http\Controllers\Admin\LckProductController::class, 'toggleAvailability'])
+                ->name('admin.lck.products.toggle');
+
+            // Commercantes
+            Route::get('commercants', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'index'])
+                ->name('admin.lck.commercants.index');
+            Route::get('commercants/create', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'create'])
+                ->name('admin.lck.commercants.create');
+            Route::post('commercants', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'store'])
+                ->name('admin.lck.commercants.store');
+            Route::get('commercants/{commercant}/edit', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'edit'])
+                ->name('admin.lck.commercants.edit');
+            Route::put('commercants/{commercant}', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'update'])
+                ->name('admin.lck.commercants.update');
+            Route::post('commercants/{commercant}/toggle', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'toggleActive'])
+                ->name('admin.lck.commercants.toggle');
+        });
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Panel Commercante — La Clé des Châteaux
+// ─────────────────────────────────────────────────────────────────────────────
+Route::prefix('commercant')->group(function () {
+    // Auth (public)
+    Route::get('/login', [CommercantAuthController::class, 'showLogin'])->name('commercant.login');
+    Route::post('/login', [CommercantAuthController::class, 'login'])->name('commercant.login.post');
+    Route::post('/logout', [CommercantAuthController::class, 'logout'])->name('commercant.logout');
+
+    // Routes protégées par le middleware commercant
+    Route::middleware(['commercant'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Commercant\DashboardController::class, 'index'])
+            ->name('commercant.dashboard');
+
+        // Commandes
+        Route::get('/orders', [\App\Http\Controllers\Commercant\OrderController::class, 'index'])
+            ->name('commercant.orders.index');
+        Route::get('/orders/export', [\App\Http\Controllers\Commercant\OrderController::class, 'export'])
+            ->name('commercant.orders.export');
+        Route::get('/orders/{ref}', [\App\Http\Controllers\Commercant\OrderController::class, 'show'])
+            ->name('commercant.orders.show');
+        Route::post('/orders/{ref}/status', [\App\Http\Controllers\Commercant\OrderController::class, 'updateStatus'])
+            ->name('commercant.orders.status');
+
+        // Catalogue (caviste seulement)
+        Route::get('/products', [\App\Http\Controllers\Commercant\ProductController::class, 'index'])
+            ->name('commercant.products.index');
+        Route::post('/products/{id}/toggle', [\App\Http\Controllers\Commercant\ProductController::class, 'toggle'])
+            ->name('commercant.products.toggle');
     });
 });

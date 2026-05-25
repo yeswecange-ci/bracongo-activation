@@ -170,6 +170,46 @@
             <span class="font-medium">Campagnes</span>
         </a> --}}
 
+        <!-- La Clé des Châteaux - Divider -->
+        <div class="border-t border-gray-700 my-3"></div>
+        <p class="px-4 text-gray-600 text-xs uppercase tracking-wider mb-2">La Clé des Châteaux</p>
+
+        <!-- LCK Commandes -->
+        <a href="{{ route('admin.lck.orders.index') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.lck.orders.*') ? 'bg-gradient-to-r from-yellow-700 to-yellow-800 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.lck.orders.*') ? 'text-white' : 'text-gray-400 group-hover:text-yellow-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                </path>
+            </svg>
+            <span class="font-medium">Commandes</span>
+        </a>
+
+        <!-- LCK Produits -->
+        <a href="{{ route('admin.lck.products.index') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.lck.products.*') ? 'bg-gradient-to-r from-yellow-700 to-yellow-800 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.lck.products.*') ? 'text-white' : 'text-gray-400 group-hover:text-yellow-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4">
+                </path>
+            </svg>
+            <span class="font-medium">Catalogue</span>
+        </a>
+
+        <!-- LCK Commercantes -->
+        <a href="{{ route('admin.lck.commercants.index') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.lck.commercants.*') ? 'bg-gradient-to-r from-yellow-700 to-yellow-800 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.lck.commercants.*') ? 'text-white' : 'text-gray-400 group-hover:text-yellow-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z">
+                </path>
+            </svg>
+            <span class="font-medium">Commercantes</span>
+        </a>
+
+        <!-- Divider -->
+        <div class="border-t border-gray-700 my-3"></div>
+
         <!-- Analytics -->
         <a href="{{ route('admin.analytics') }}"
             class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.analytics*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg' : '' }}">

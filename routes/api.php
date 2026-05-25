@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\LckController;
 use App\Http\Controllers\Api\QuizController;
 use App\Http\Controllers\Api\TwilioStudioController;
 use App\Http\Controllers\Api\TwilioWebhookController;
@@ -75,6 +76,27 @@ Route::prefix('can')->group(function () {
     Route::post('/unsubscribe', [TwilioStudioController::class, 'unsubscribe'])->name('api.can.unsubscribe');
     Route::get('/partners', [TwilioStudioController::class, 'getPartners'])->name('api.can.partners');
     Route::get('/prizes', [TwilioStudioController::class, 'getPrizes'])->name('api.can.prizes');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Endpoints La Clé des Châteaux — appelés par WordPress + Twilio Studio
+// ─────────────────────────────────────────────────────────────────────────────
+Route::prefix('lck')->group(function () {
+
+    // Catalogue (WordPress + bot Twilio)
+    Route::get('/categories', [LckController::class, 'getCategories'])->name('api.lck.categories');
+    Route::get('/products', [LckController::class, 'getProducts'])->name('api.lck.products');
+
+    // Tunnel panier → commande (WordPress → WhatsApp → Twilio)
+    Route::post('/cart/create', [LckController::class, 'createCart'])->name('api.lck.cart.create');
+    Route::get('/cart/{token}', [LckController::class, 'getCart'])->name('api.lck.cart.show');
+
+    // Confirmation / annulation depuis Twilio Studio
+    Route::post('/order/confirm', [LckController::class, 'confirmOrder'])->name('api.lck.order.confirm');
+    Route::post('/order/cancel', [LckController::class, 'cancelOrder'])->name('api.lck.order.cancel');
+
+    // Mise à jour statut depuis le dashboard commercante
+    Route::put('/order/{ref}/status', [LckController::class, 'updateOrderStatus'])->name('api.lck.order.status');
 });
 
 // Routes API authentifiées (pour future app mobile par exemple)

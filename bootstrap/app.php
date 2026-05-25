@@ -14,7 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin'      => \App\Http\Middleware\AdminMiddleware::class,
+            'commercant' => \App\Http\Middleware\CommerçantMiddleware::class,
             'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
         ]);
 
