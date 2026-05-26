@@ -94,6 +94,16 @@
                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
             </div>
 
+            <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    ID Produit WordPress
+                    <span class="text-xs text-gray-400 font-normal ml-1">— trouvable dans WooCommerce → Produits → colonne ID</span>
+                </label>
+                <input type="number" name="wordpress_product_id" value="{{ old('wordpress_product_id') }}" min="1"
+                       placeholder="Ex: 1042"
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+            </div>
+
             <div class="col-span-2 flex items-center gap-6 pt-2">
                 <label class="flex items-center gap-2.5 cursor-pointer">
                     <input type="checkbox" name="is_available" value="1" {{ old('is_available', '1') ? 'checked' : '' }}

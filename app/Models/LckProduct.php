@@ -24,6 +24,7 @@ class LckProduct extends Model
         'is_available',
         'is_active',
         'sort_order',
+        'wordpress_product_id',
     ];
 
     protected $casts = [

@@ -25,10 +25,10 @@ class LckController extends Controller
     public function createCart(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'items'                => 'required|array|min:1',
-            'items.*.product_id'   => 'required|integer|exists:lck_products,id',
-            'items.*.quantity'     => 'required|integer|min:1|max:100',
-            'customer_phone'       => 'nullable|string|max:20',
+            'items'                    => 'required|array|min:1',
+            'items.*.product_id'       => 'required|integer',
+            'items.*.quantity'         => 'required|integer|min:1|max:100',
+            'customer_phone'           => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -43,7 +43,10 @@ class LckController extends Controller
             $total     = 0;
 
             foreach ($request->items as $item) {
-                $product = LckProduct::find($item['product_id']);
+                $wooId   = (int) $item['product_id'];
+                // Cherche d'abord par wordpress_product_id, puis par id LCK natif
+                $product = LckProduct::where('wordpress_product_id', $wooId)->first()
+                        ?? LckProduct::find($wooId);
 
                 if (!$product || !$product->is_available || !$product->is_active) {
                     return response()->json([

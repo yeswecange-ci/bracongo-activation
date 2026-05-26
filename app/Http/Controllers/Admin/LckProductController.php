@@ -26,24 +26,26 @@ class LckProductController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'category_id'    => 'nullable|exists:lck_categories,id',
-            'name'           => 'required|string|max:200',
-            'description'    => 'nullable|string',
-            'origin'         => 'nullable|string|max:100',
-            'vintage'        => 'nullable|string|max:10',
-            'price'          => 'required|numeric|min:0',
-            'whatsapp_label' => 'nullable|string|max:150',
-            'stock'          => 'nullable|integer|min:0',
-            'is_available'   => 'boolean',
-            'is_active'      => 'boolean',
-            'sort_order'     => 'nullable|integer',
+            'category_id'           => 'nullable|exists:lck_categories,id',
+            'name'                  => 'required|string|max:200',
+            'description'           => 'nullable|string',
+            'origin'                => 'nullable|string|max:100',
+            'vintage'               => 'nullable|string|max:10',
+            'price'                 => 'required|numeric|min:0',
+            'whatsapp_label'        => 'nullable|string|max:150',
+            'stock'                 => 'nullable|integer|min:0',
+            'is_available'          => 'boolean',
+            'is_active'             => 'boolean',
+            'sort_order'            => 'nullable|integer',
+            'wordpress_product_id'  => 'nullable|integer|unique:lck_products,wordpress_product_id',
         ]);
 
-        $data['slug']            = Str::slug($data['name'] . '-' . ($data['vintage'] ?? ''));
-        $data['whatsapp_label'] = ($data['whatsapp_label'] ?? null) ?: $data['name'];
-        $data['is_available']   = $request->boolean('is_available', true);
-        $data['is_active']      = $request->boolean('is_active', true);
-        $data['sort_order']     = $data['sort_order'] ?? 0;
+        $data['slug']                   = Str::slug($data['name'] . '-' . ($data['vintage'] ?? ''));
+        $data['whatsapp_label']         = ($data['whatsapp_label'] ?? null) ?: $data['name'];
+        $data['is_available']           = $request->boolean('is_available', true);
+        $data['is_active']              = $request->boolean('is_active', true);
+        $data['sort_order']             = $data['sort_order'] ?? 0;
+        $data['wordpress_product_id']   = $data['wordpress_product_id'] ?? null;
 
         LckProduct::create($data);
 
@@ -60,23 +62,25 @@ class LckProductController extends Controller
     public function update(Request $request, LckProduct $product)
     {
         $data = $request->validate([
-            'category_id'    => 'nullable|exists:lck_categories,id',
-            'name'           => 'required|string|max:200',
-            'description'    => 'nullable|string',
-            'origin'         => 'nullable|string|max:100',
-            'vintage'        => 'nullable|string|max:10',
-            'price'          => 'required|numeric|min:0',
-            'whatsapp_label' => 'nullable|string|max:150',
-            'stock'          => 'nullable|integer|min:0',
-            'is_available'   => 'boolean',
-            'is_active'      => 'boolean',
-            'sort_order'     => 'nullable|integer',
+            'category_id'           => 'nullable|exists:lck_categories,id',
+            'name'                  => 'required|string|max:200',
+            'description'           => 'nullable|string',
+            'origin'                => 'nullable|string|max:100',
+            'vintage'               => 'nullable|string|max:10',
+            'price'                 => 'required|numeric|min:0',
+            'whatsapp_label'        => 'nullable|string|max:150',
+            'stock'                 => 'nullable|integer|min:0',
+            'is_available'          => 'boolean',
+            'is_active'             => 'boolean',
+            'sort_order'            => 'nullable|integer',
+            'wordpress_product_id'  => 'nullable|integer|unique:lck_products,wordpress_product_id,' . $product->id,
         ]);
 
-        $data['whatsapp_label'] = ($data['whatsapp_label'] ?? null) ?: $data['name'];
-        $data['is_available']   = $request->boolean('is_available');
-        $data['is_active']      = $request->boolean('is_active');
-        $data['sort_order']     = $data['sort_order'] ?? 0;
+        $data['whatsapp_label']        = ($data['whatsapp_label'] ?? null) ?: $data['name'];
+        $data['is_available']          = $request->boolean('is_available');
+        $data['is_active']             = $request->boolean('is_active');
+        $data['sort_order']            = $data['sort_order'] ?? 0;
+        $data['wordpress_product_id']  = $data['wordpress_product_id'] ?? null;
         $product->update($data);
 
         return redirect()->route('admin.lck.products.index')
