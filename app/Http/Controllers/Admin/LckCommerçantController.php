@@ -66,6 +66,13 @@ class LckCommerçantController extends Controller
             ->with('success', "Compte mis à jour.");
     }
 
+    public function destroy(Commercant $commercant)
+    {
+        $commercant->delete();
+        return redirect()->route('admin.lck.commercants.index')
+            ->with('success', "Compte supprimé.");
+    }
+
     public function toggleActive(Commercant $commercant)
     {
         $commercant->update(['is_active' => !$commercant->is_active]);

@@ -196,6 +196,8 @@ Route::prefix('admin')->group(function () {
                 ->name('admin.lck.orders.index');
             Route::get('orders/{ref}', [\App\Http\Controllers\Admin\LckOrderController::class, 'show'])
                 ->name('admin.lck.orders.show');
+            Route::post('orders/{ref}/status', [\App\Http\Controllers\Admin\LckOrderController::class, 'updateStatus'])
+                ->name('admin.lck.orders.status');
 
             // Produits
             Route::get('products', [\App\Http\Controllers\Admin\LckProductController::class, 'index'])
@@ -224,6 +226,8 @@ Route::prefix('admin')->group(function () {
                 ->name('admin.lck.commercants.edit');
             Route::put('commercants/{commercant}', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'update'])
                 ->name('admin.lck.commercants.update');
+            Route::delete('commercants/{commercant}', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'destroy'])
+                ->name('admin.lck.commercants.destroy');
             Route::post('commercants/{commercant}/toggle', [\App\Http\Controllers\Admin\LckCommerçantController::class, 'toggleActive'])
                 ->name('admin.lck.commercants.toggle');
         });

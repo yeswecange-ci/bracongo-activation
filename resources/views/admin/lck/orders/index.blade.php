@@ -22,6 +22,27 @@
         </a>
     </div>
 
+    {{-- Filtres + recherche --}}
+    <div class="bg-white rounded-xl shadow-sm p-4 flex flex-col md:flex-row gap-3">
+        <div class="flex gap-2 flex-wrap">
+            @foreach(['all' => 'Toutes', 'received' => 'Reçues', 'confirmed' => 'Confirmées', 'preparing' => 'Préparation', 'ready' => 'Prêtes', 'delivered' => 'Livrées', 'cancelled' => 'Annulées'] as $key => $label)
+            <a href="{{ request()->fullUrlWithQuery(['status' => $key, 'page' => 1]) }}"
+               class="px-3 py-1.5 rounded-full text-sm font-medium border transition-colors whitespace-nowrap
+                   {{ request('status', 'all') === $key ? 'bg-yellow-600 text-white border-yellow-600' : 'bg-white text-gray-600 border-gray-200 hover:border-yellow-400' }}">
+                {{ $label }}
+                <span class="opacity-70 text-xs">({{ $stats[$key] ?? 0 }})</span>
+            </a>
+            @endforeach
+        </div>
+        <form method="GET" action="{{ route('admin.lck.orders.index') }}" class="flex gap-2 md:ml-auto">
+            <input type="hidden" name="status" value="{{ request('status', 'all') }}">
+            <input type="text" name="search" value="{{ request('search') }}"
+                   placeholder="Réf, client, téléphone…"
+                   class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+            <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">Chercher</button>
+        </form>
+    </div>
+
     {{-- Stats --}}
     <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500">
