@@ -25,10 +25,13 @@ class LckController extends Controller
     public function createCart(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'items'                    => 'required|array|min:1',
-            'items.*.product_id'       => 'required|integer',
-            'items.*.quantity'         => 'required|integer|min:1|max:100',
-            'customer_phone'           => 'nullable|string|max:20',
+            'items'                => 'required|array|min:1',
+            'items.*.product_id'   => 'required|integer',
+            'items.*.quantity'     => 'required|integer|min:1|max:100',
+            'items.*.name'         => 'nullable|string|max:200',
+            'items.*.price'        => 'nullable|numeric|min:0',
+            'items.*.category'     => 'nullable|string|max:100',
+            'customer_phone'       => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -44,9 +47,7 @@ class LckController extends Controller
 
             foreach ($request->items as $item) {
                 $wooId   = (int) $item['product_id'];
-                // Cherche d'abord par wordpress_product_id, puis par id LCK natif
-                $product = LckProduct::where('wordpress_product_id', $wooId)->first()
-                        ?? LckProduct::find($wooId);
+                $product = $this->syncProductFromWooCommerce($wooId, $item);
 
                 if (!$product || !$product->is_available || !$product->is_active) {
                     return response()->json([
@@ -56,14 +57,16 @@ class LckController extends Controller
                 }
 
                 $qty      = (int) $item['quantity'];
-                $subtotal = $product->price * $qty;
+                // Prix prioritaire : celui de WooCommerce si fourni, sinon celui en base
+                $price    = isset($item['price']) ? (float) $item['price'] : (float) $product->price;
+                $subtotal = $price * $qty;
                 $total   += $subtotal;
 
                 $cartItems[] = [
                     'product_id' => $product->id,
                     'name'       => $product->whatsapp_label,
                     'category'   => $product->category?->name,
-                    'unit_price' => (float) $product->price,
+                    'unit_price' => $price,
                     'quantity'   => $qty,
                     'subtotal'   => (float) $subtotal,
                 ];
@@ -397,5 +400,64 @@ class LckController extends Controller
             ]),
             'bot_text'   => implode("\n", $lines),
         ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Upsert automatique d'un produit WooCommerce dans lck_products
+    // Crée le produit s'il n'existe pas, met à jour nom/prix sinon.
+    // Ne touche jamais à is_available / is_active (géré par l'équipe).
+    // ─────────────────────────────────────────────────────────────
+    private function syncProductFromWooCommerce(int $wooId, array $item): ?LckProduct
+    {
+        // Si pas de données WooCommerce fournies, cherche uniquement en base
+        if (empty($item['name']) || !isset($item['price'])) {
+            return LckProduct::where('wordpress_product_id', $wooId)->first()
+                ?? LckProduct::find($wooId);
+        }
+
+        $categoryId = null;
+        if (!empty($item['category'])) {
+            $catName    = trim($item['category']);
+            $catSlug    = \Illuminate\Support\Str::slug($catName);
+            $category   = LckCategory::firstOrCreate(
+                ['slug' => $catSlug],
+                ['name' => $catName, 'is_active' => true, 'sort_order' => 0]
+            );
+            $categoryId = $category->id;
+        }
+
+        $name = trim($item['name']);
+        $slug = \Illuminate\Support\Str::slug($name . '-' . $wooId);
+
+        $product = LckProduct::where('wordpress_product_id', $wooId)->first();
+
+        if ($product) {
+            // Met à jour uniquement les données WooCommerce (pas les flags de dispo)
+            $product->update([
+                'name'                => $name,
+                'whatsapp_label'      => $name,
+                'price'               => (float) $item['price'],
+                'category_id'         => $categoryId ?? $product->category_id,
+            ]);
+        } else {
+            $product = LckProduct::create([
+                'wordpress_product_id' => $wooId,
+                'name'                 => $name,
+                'slug'                 => $slug,
+                'whatsapp_label'       => $name,
+                'price'                => (float) $item['price'],
+                'category_id'          => $categoryId,
+                'is_available'         => true,
+                'is_active'            => true,
+                'sort_order'           => 0,
+            ]);
+
+            Log::info('LCK Product auto-created from WooCommerce', [
+                'woo_id' => $wooId,
+                'name'   => $name,
+            ]);
+        }
+
+        return $product;
     }
 }
