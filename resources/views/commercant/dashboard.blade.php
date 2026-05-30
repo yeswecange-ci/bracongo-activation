@@ -3,118 +3,117 @@
 
 @section('content')
 
-{{-- Alerte commandes libres --}}
+{{-- Greeting --}}
+<div class="mb-6">
+    <p class="text-xs font-semibold tracking-widest text-black/30 uppercase mb-1">Bonjour</p>
+    <h1 class="text-2xl font-bold text-black/90">{{ auth('commercant')->user()->name }} 👋</h1>
+</div>
+
+{{-- Commandes libres --}}
 @if($stats['unclaimed'] > 0)
 <a href="{{ route('commercant.orders.index', ['status' => 'received']) }}"
-   class="block bg-orange-500 rounded-2xl p-4 mb-4 shadow-sm active:bg-orange-600 transition-colors">
-    <div class="flex items-center justify-between">
-        <div>
-            <p class="text-white font-bold">{{ $stats['unclaimed'] }} commande(s) libre(s) 🔓</p>
-            <p class="text-orange-100 text-sm mt-0.5">Non assignées — cliquez pour les prendre →</p>
-        </div>
-        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">🙋</div>
+   class="flex items-center justify-between p-4 rounded-2xl mb-5 transition-opacity active:opacity-80"
+   style="background: linear-gradient(135deg, #C9A84C 0%, #A8873A 100%)">
+    <div>
+        <p class="text-black/80 text-xs font-semibold uppercase tracking-wide">Nouvelles commandes</p>
+        <p class="text-black font-black text-2xl mt-0.5">{{ $stats['unclaimed'] }} libre{{ $stats['unclaimed'] > 1 ? 's' : '' }}</p>
+        <p class="text-black/60 text-xs mt-1">Appuyez pour prendre →</p>
     </div>
+    <div class="w-12 h-12 rounded-xl bg-black/10 flex items-center justify-center text-2xl flex-shrink-0">🙋</div>
 </a>
 @endif
 
-{{-- Stats globales --}}
-<div class="grid grid-cols-2 gap-3 mb-4">
-    <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-blue-500">
-        <p class="text-xs text-gray-500 font-medium mb-1">Nouvelles</p>
-        <p class="text-4xl font-bold text-gray-900">{{ $stats['received'] }}</p>
-        <p class="text-xs text-blue-600 font-medium mt-1">à traiter</p>
-    </div>
-    <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-yellow-500">
-        <p class="text-xs text-gray-500 font-medium mb-1">Préparation</p>
-        <p class="text-4xl font-bold text-gray-900">{{ $stats['preparing'] }}</p>
-        <p class="text-xs text-yellow-600 font-medium mt-1">en cours</p>
-    </div>
-    <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-green-500">
-        <p class="text-xs text-gray-500 font-medium mb-1">Prêtes</p>
-        <p class="text-4xl font-bold text-gray-900">{{ $stats['ready'] }}</p>
-        <p class="text-xs text-green-600 font-medium mt-1">à récupérer</p>
-    </div>
-    <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-yellow-700">
-        <p class="text-xs text-gray-500 font-medium mb-1">CA total</p>
-        <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['revenue'], 0) }}<span class="text-lg ml-1">$</span></p>
-        <p class="text-xs text-gray-400 font-medium mt-1">{{ $stats['total'] }} commandes</p>
-    </div>
-</div>
-
-{{-- Mes stats perso --}}
-<div class="bg-gray-900 rounded-2xl p-4 mb-5">
-    <p class="text-xs text-yellow-500 font-bold uppercase tracking-widest mb-3">Mes performances</p>
-    <div class="grid grid-cols-3 gap-3">
-        <div class="text-center">
-            <p class="text-2xl font-black text-white">{{ $myStats['delivered'] }}</p>
-            <p class="text-xs text-gray-400 mt-0.5">Livrées</p>
-        </div>
-        <div class="text-center border-x border-white/10">
-            <p class="text-2xl font-black text-white">{{ $myStats['today'] }}</p>
-            <p class="text-xs text-gray-400 mt-0.5">Auj.</p>
-        </div>
-        <div class="text-center">
-            <p class="text-xl font-black text-yellow-400">{{ number_format($myStats['revenue'], 0) }}$</p>
-            <p class="text-xs text-gray-400 mt-0.5">Mon CA</p>
-        </div>
-    </div>
-</div>
-
-{{-- Raccourci commandes en attente --}}
-@if($stats['received'] > 0)
+{{-- Nouvelles commandes banner --}}
+@if($stats['received'] > 0 && $stats['unclaimed'] == 0)
 <a href="{{ route('commercant.orders.index', ['status' => 'received']) }}"
-   class="block bg-blue-600 rounded-2xl p-4 mb-6 shadow-sm active:bg-blue-700 transition-colors">
-    <div class="flex items-center justify-between">
-        <div>
-            <p class="text-white font-bold text-lg">{{ $stats['received'] }} nouvelle(s) commande(s)</p>
-            <p class="text-blue-200 text-sm mt-0.5">Appuyez pour traiter →</p>
-        </div>
-        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-        </div>
+   class="flex items-center justify-between p-4 rounded-2xl mb-5 bg-black active:bg-black/80 transition-colors">
+    <div>
+        <p class="text-white/50 text-xs font-semibold uppercase tracking-wide">À traiter</p>
+        <p class="text-white font-black text-2xl mt-0.5">{{ $stats['received'] }} commande{{ $stats['received'] > 1 ? 's' : '' }}</p>
     </div>
+    <svg class="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
 </a>
 @endif
+
+{{-- KPIs globaux --}}
+<div class="grid grid-cols-3 gap-3 mb-5">
+    <div class="card p-4 text-center">
+        <p class="text-2xl font-black text-black/90">{{ $stats['preparing'] }}</p>
+        <p class="text-[11px] text-black/40 font-medium mt-1">En cours</p>
+    </div>
+    <div class="card p-4 text-center">
+        <p class="text-2xl font-black" style="color: #C9A84C">{{ $stats['ready'] }}</p>
+        <p class="text-[11px] text-black/40 font-medium mt-1">Prêtes</p>
+    </div>
+    <div class="card p-4 text-center">
+        <p class="text-2xl font-black text-black/90">{{ $stats['total'] }}</p>
+        <p class="text-[11px] text-black/40 font-medium mt-1">Total</p>
+    </div>
+</div>
+
+{{-- Mes stats --}}
+<div class="card mb-5 overflow-hidden">
+    <div class="px-4 pt-4 pb-3 border-b border-black/5">
+        <p class="text-xs font-bold tracking-widest uppercase text-black/30">Mes performances</p>
+    </div>
+    <div class="grid grid-cols-3 divide-x divide-black/5">
+        <div class="p-4 text-center">
+            <p class="text-xl font-black text-black/90">{{ $myStats['delivered'] }}</p>
+            <p class="text-[11px] text-black/35 font-medium mt-1">Livrées</p>
+        </div>
+        <div class="p-4 text-center">
+            <p class="text-xl font-black text-black/90">{{ $myStats['today'] }}</p>
+            <p class="text-[11px] text-black/35 font-medium mt-1">Aujourd'hui</p>
+        </div>
+        <div class="p-4 text-center">
+            <p class="text-xl font-black" style="color:#C9A84C">{{ number_format($myStats['revenue'], 0) }}<span class="text-sm">$</span></p>
+            <p class="text-[11px] text-black/35 font-medium mt-1">Mon CA</p>
+        </div>
+    </div>
+</div>
 
 {{-- Commandes récentes --}}
-<div class="mb-3 flex items-center justify-between">
-    <h2 class="font-bold text-gray-800 text-base">Commandes récentes</h2>
-    <a href="{{ route('commercant.orders.index') }}" class="text-sm text-yellow-700 font-semibold">Tout voir →</a>
+<div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm font-bold text-black/70">Activité récente</h2>
+    <a href="{{ route('commercant.orders.index') }}" class="text-xs font-semibold" style="color:#C9A84C">Tout voir</a>
 </div>
 
 @if($recentOrders->isEmpty())
-<div class="bg-white rounded-2xl shadow-sm p-10 text-center">
-    <div class="text-5xl mb-3">🍷</div>
-    <p class="text-gray-500 font-medium">Aucune commande pour le moment.</p>
+<div class="card p-10 text-center">
+    <p class="text-3xl mb-2">🍷</p>
+    <p class="text-sm text-black/40 font-medium">Aucune commande pour le moment</p>
 </div>
 @else
-<div class="space-y-3">
+<div class="space-y-2">
     @foreach($recentOrders as $order)
+    @php
+    $statusColor = match($order->status) {
+        'received'  => '#2563EB',
+        'confirmed' => '#7C3AED',
+        'preparing' => '#D97706',
+        'ready'     => '#16A34A',
+        'delivered' => '#9CA3AF',
+        default     => '#EF4444',
+    };
+    @endphp
     <a href="{{ route('commercant.orders.show', $order->order_ref) }}"
-       class="block bg-white rounded-2xl shadow-sm p-4 active:bg-gray-50 transition-colors border border-gray-50">
-        <div class="flex items-start justify-between gap-3">
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="font-mono font-bold text-gray-800 text-sm">{{ $order->order_ref }}</span>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0
-                        @if($order->status === 'received') bg-blue-100 text-blue-700
-                        @elseif($order->status === 'confirmed') bg-indigo-100 text-indigo-700
-                        @elseif($order->status === 'preparing') bg-yellow-100 text-yellow-700
-                        @elseif($order->status === 'ready') bg-green-100 text-green-700
-                        @elseif($order->status === 'delivered') bg-gray-100 text-gray-600
-                        @else bg-red-100 text-red-600 @endif">
-                        {{ $order->status_label }}
-                    </span>
-                </div>
-                <p class="text-gray-600 text-sm truncate">{{ $order->customer_name ?? $order->customer_phone }}</p>
-                <p class="text-gray-400 text-xs mt-1">{{ $order->created_at->diffForHumans() }}</p>
+       class="card flex items-center gap-4 px-4 py-3.5 active:bg-black/2 transition-colors block">
+        <div class="w-1.5 h-10 rounded-full flex-shrink-0" style="background: {{ $statusColor }}"></div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+                <p class="font-mono text-xs font-bold text-black/70">{{ $order->order_ref }}</p>
+                @if(!$order->commercant_id)
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700">Libre</span>
+                @endif
             </div>
-            <div class="text-right flex-shrink-0">
-                <p class="font-bold text-gray-800">{{ number_format($order->total, 2) }} $</p>
-                <p class="text-xs text-gray-400 mt-1">{{ $order->items->count() }} art.</p>
-            </div>
+            <p class="text-sm font-medium text-black/90 truncate mt-0.5">{{ $order->customer_name ?? $order->customer_phone }}</p>
+            <p class="text-xs text-black/35 mt-0.5">{{ $order->created_at->diffForHumans() }}</p>
+        </div>
+        <div class="text-right flex-shrink-0">
+            <p class="text-sm font-bold text-black/80">{{ number_format($order->total, 2) }} $</p>
+            <p class="text-[11px] text-black/35 mt-0.5">{{ $order->items->count() }} art.</p>
         </div>
     </a>
     @endforeach
