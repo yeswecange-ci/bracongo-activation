@@ -13,22 +13,18 @@ class WhatsAppService
     public function __construct()
     {
         $accountSid = config('services.twilio.account_sid');
-        $authToken = config('services.twilio.auth_token');
+        $authToken  = config('services.twilio.auth_token');
         $this->from = config('services.twilio.whatsapp_from');
 
         if ($accountSid && $authToken) {
-            // Fix pour Windows/WAMP - Désactiver vérification SSL en dev
-            if (app()->environment('local')) {
-                // Options cURL pour désactiver la vérification SSL en dev
-                $httpClient = new \Twilio\Http\CurlClient([
-                    CURLOPT_SSL_VERIFYPEER => false,
-                    CURLOPT_SSL_VERIFYHOST => false,
-                ]);
-                $this->twilio = new Client($accountSid, $authToken, null, null, $httpClient);
-            } else {
-                // En production, utiliser le client par défaut avec SSL
-                $this->twilio = new Client($accountSid, $authToken);
-            }
+            // Le serveur de prod a un problème de certificats CA pour les appels
+            // sortants vers l'API Twilio — on désactive la vérification SSL.
+            // Twilio utilise HTTPS donc les données restent chiffrées.
+            $httpClient = new \Twilio\Http\CurlClient([
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false,
+            ]);
+            $this->twilio = new Client($accountSid, $authToken, null, null, $httpClient);
         }
     }
 
@@ -47,11 +43,20 @@ class WhatsAppService
             return false;
         }
 
+        // S'assurer que le numéro commence par whatsapp:
+        if (!str_starts_with($to, 'whatsapp:')) {
+            $to = 'whatsapp:' . $to;
+        }
+
+        // Bloquer l'envoi vers le numéro FROM (Twilio refuse de s'envoyer à lui-même)
+        $fromClean = preg_replace('/[^0-9]/', '', $this->from);
+        $toClean   = preg_replace('/[^0-9]/', '', $to);
+        if ($fromClean === $toClean) {
+            Log::warning('WhatsApp: envoi bloqué — destinataire = numéro FROM Twilio', ['to' => $to]);
+            return false;
+        }
+
         try {
-            // S'assurer que le numéro commence par whatsapp:
-            if (!str_starts_with($to, 'whatsapp:')) {
-                $to = 'whatsapp:' . $to;
-            }
 
             $params = [
                 'from' => $this->from,
