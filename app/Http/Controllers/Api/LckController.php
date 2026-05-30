@@ -438,6 +438,96 @@ class LckController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    // GET /api/lck/order/{ref}/status-check
+    // Appelé par Twilio quand le client envoie STATUT-LCK-XXXX
+    // ─────────────────────────────────────────────────────────────
+    public function checkOrderStatus(string $ref): JsonResponse
+    {
+        $order = LckOrder::with('items')->where('order_ref', $ref)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success'    => false,
+                'found'      => false,
+                'status_text' => "❌ Commande *{$ref}* introuvable.\n\nVérifiez la référence et réessayez.",
+            ], 404);
+        }
+
+        $statusEmoji = match ($order->status) {
+            'received'  => '🔵',
+            'confirmed' => '🟣',
+            'preparing' => '🟡',
+            'ready'     => '🟢',
+            'delivered' => '✅',
+            'cancelled' => '❌',
+            default     => '⚪',
+        };
+
+        $paymentLine = $order->payment_method === 'cash_on_delivery'
+            ? "💵 Paiement à la livraison"
+            : ($order->isPaid() ? "✅ Paiement reçu" : "⏳ Paiement en attente");
+
+        $itemsText = $order->items->map(
+            fn($i) => "• {$i->product_name} × {$i->quantity}"
+        )->implode("\n");
+
+        $statusText = "{$statusEmoji} *Commande {$ref}*\n\n"
+            . "Statut : *{$order->status_label}*\n"
+            . "Total : *" . number_format($order->total, 2) . " \$*\n"
+            . "{$paymentLine}\n\n"
+            . "Articles :\n{$itemsText}\n\n"
+            . "_Commandé le {$order->created_at->format('d/m/Y à H:i')}_";
+
+        return response()->json([
+            'success'     => true,
+            'found'       => true,
+            'status'      => $order->status,
+            'status_label' => $order->status_label,
+            'status_text' => $statusText,
+            'can_cancel'  => !in_array($order->status, ['delivered', 'cancelled', 'preparing', 'ready']),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/lck/order/{ref}/cancel-by-customer
+    // Appelé par Twilio quand le client envoie ANNULER-LCK-XXXX
+    // ─────────────────────────────────────────────────────────────
+    public function cancelByCustomer(Request $request, string $ref): JsonResponse
+    {
+        $order = LckOrder::where('order_ref', $ref)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success'      => false,
+                'cancel_text'  => "❌ Commande *{$ref}* introuvable.",
+            ], 404);
+        }
+
+        if (in_array($order->status, ['delivered', 'cancelled'])) {
+            return response()->json([
+                'success'      => false,
+                'cancel_text'  => "ℹ️ La commande *{$ref}* est déjà *{$order->status_label}* et ne peut plus être annulée.",
+            ], 409);
+        }
+
+        if (in_array($order->status, ['preparing', 'ready'])) {
+            return response()->json([
+                'success'      => false,
+                'cancel_text'  => "⚠️ La commande *{$ref}* est déjà en cours de préparation.\n\nContactez directement notre équipe pour toute modification.",
+            ], 409);
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        Log::info('LCK Order cancelled by customer via WhatsApp', ['order_ref' => $ref]);
+
+        return response()->json([
+            'success'     => true,
+            'cancel_text' => "✅ Commande *{$ref}* annulée avec succès.\n\nMerci de votre confiance. N'hésitez pas à repasser commande sur notre site. 🍷\n\n_La Clé des Châteaux_",
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Upsert automatique d'un produit WooCommerce dans lck_products
     // Crée le produit s'il n'existe pas, met à jour nom/prix sinon.
     // Ne touche jamais à is_available / is_active (géré par l'équipe).

@@ -98,6 +98,10 @@ Route::prefix('lck')->group(function () {
     // Mise à jour statut depuis le dashboard commercante
     Route::put('/order/{ref}/status', [LckController::class, 'updateOrderStatus'])->name('api.lck.order.status');
 
+    // Consultation + annulation depuis WhatsApp (Twilio Studio)
+    Route::get('/order/{ref}/status-check', [LckController::class, 'checkOrderStatus'])->name('api.lck.order.status-check');
+    Route::post('/order/{ref}/cancel-by-customer', [LckController::class, 'cancelByCustomer'])->name('api.lck.order.cancel-customer');
+
     // Paiement — initiation, webhook, vérification
     Route::post('/payment/initiate', [\App\Http\Controllers\Api\LckPaymentController::class, 'initiate'])->name('api.lck.payment.initiate');
     Route::post('/payment/callback', [\App\Http\Controllers\Api\LckPaymentController::class, 'callback'])->name('api.lck.payment.callback');
