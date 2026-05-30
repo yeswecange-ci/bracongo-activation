@@ -269,6 +269,8 @@ Route::prefix('commercant')->group(function () {
         // Catalogue (caviste seulement)
         Route::get('/products', [\App\Http\Controllers\Commercant\ProductController::class, 'index'])
             ->name('commercant.products.index');
+        Route::post('/products/{id}/stock', [\App\Http\Controllers\Commercant\ProductController::class, 'updateStock'])
+            ->name('commercant.products.stock');
         Route::post('/products/{id}/toggle', [\App\Http\Controllers\Commercant\ProductController::class, 'toggle'])
             ->name('commercant.products.toggle');
     });

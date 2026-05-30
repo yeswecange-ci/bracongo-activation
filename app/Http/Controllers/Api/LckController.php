@@ -213,7 +213,7 @@ class LckController extends Controller
                 'status'            => LckOrder::STATUS_RECEIVED,
             ]);
 
-            // Créer les lignes de commande
+            // Créer les lignes de commande + décrémenter le stock
             foreach ($cart->items as $item) {
                 LckOrderItem::create([
                     'order_id'         => $order->id,
@@ -224,6 +224,16 @@ class LckController extends Controller
                     'quantity'         => $item['quantity'],
                     'subtotal'         => $item['subtotal'],
                 ]);
+
+                // Décrémenter stock si géré (stock !== null)
+                $product = LckProduct::find($item['product_id']);
+                if ($product && $product->stock !== null) {
+                    $newStock = max(0, $product->stock - $item['quantity']);
+                    $product->update([
+                        'stock'        => $newStock,
+                        'is_available' => $newStock > 0,
+                    ]);
+                }
             }
 
             DB::commit();

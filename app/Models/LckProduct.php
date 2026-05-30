@@ -21,6 +21,7 @@ class LckProduct extends Model
         'image',
         'whatsapp_label',
         'stock',
+        'stock_alert_threshold',
         'is_available',
         'is_active',
         'sort_order',
