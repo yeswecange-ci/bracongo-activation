@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Commercant;
 use App\Models\LckOrder;
+use App\Models\LckSetting;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -162,18 +163,35 @@ class LckNotificationService
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Commande prête → notifier le client
+    // Commande prête → notifier le client avec adresse + lien bon
     // ─────────────────────────────────────────────────────────────
     public function notifyCustomerOrderReady(LckOrder $order): void
     {
-        $message = "📦 *Votre commande est prête!*\n\n"
-            . "Référence: *{$order->order_ref}*\n\n"
-            . "Vous pouvez venir la récupérer à:\n"
-            . "📍 La Clé des Châteaux\n"
-            . "Boulevard du 30 Juin, Commune de Gombe\n"
-            . "Kinshasa, RDC\n\n"
-            . "🕐 Horaires: Lun–Sam 9h–19h\n\n"
-            . "À très bientôt! 🍷";
+        // Récupère les paramètres configurés par l'admin
+        $s = LckSetting::asMap();
+        $name     = $s['pickup_name']     ?? 'La Clé des Châteaux';
+        $address  = str_replace("\n", "\n   ", $s['pickup_address'] ?? 'Boulevard du 30 Juin, Commune de Gombe');
+        $city     = $s['pickup_city']     ?? 'Kinshasa, RDC';
+        $phone    = $s['pickup_phone']    ?? '';
+        $hours    = $s['pickup_hours']    ?? 'Lun–Sam 9h–19h';
+        $deadline = $s['pickup_deadline'] ?? '5';
+
+        // Lien sécurisé vers le bon de commande public
+        $token      = substr(hash('sha256', $order->order_ref . config('app.key')), 0, 16);
+        $receiptUrl = url('/lck/receipt/' . $order->order_ref . '?t=' . $token);
+
+        $phoneLine = $phone ? "\n📞 {$phone}" : '';
+
+        $message = "📦 *Votre commande est prête !*\n\n"
+            . "Référence : *{$order->order_ref}*\n"
+            . "Total : *" . number_format($order->total, 2) . " \$*\n\n"
+            . "🏪 *{$name}*\n"
+            . "📍 {$address}\n"
+            . "🌍 {$city}"
+            . $phoneLine . "\n"
+            . "🕐 {$hours}\n\n"
+            . "⚠️ Vous avez *{$deadline} jours ouvrés* pour récupérer votre colis.\n\n"
+            . "📄 Votre bon de commande :\n{$receiptUrl}";
 
         $result = $this->whatsapp->sendMessage($order->customer_phone, $message);
 

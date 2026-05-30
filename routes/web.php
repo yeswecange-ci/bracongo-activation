@@ -202,6 +202,10 @@ Route::prefix('admin')->group(function () {
                 ->name('admin.lck.orders.destroy');
             Route::get('reports', [\App\Http\Controllers\Admin\LckReportController::class, 'index'])
                 ->name('admin.lck.reports');
+            Route::get('settings', [\App\Http\Controllers\Admin\LckSettingsController::class, 'edit'])
+                ->name('admin.lck.settings');
+            Route::post('settings', [\App\Http\Controllers\Admin\LckSettingsController::class, 'update'])
+                ->name('admin.lck.settings.update');
 
             // Produits
             Route::get('products', [\App\Http\Controllers\Admin\LckProductController::class, 'index'])
@@ -237,6 +241,12 @@ Route::prefix('admin')->group(function () {
         });
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bon de commande public (accessible par le client via lien WhatsApp)
+// ─────────────────────────────────────────────────────────────────────────────
+Route::get('/lck/receipt/{ref}', [\App\Http\Controllers\LckReceiptController::class, 'show'])
+    ->name('lck.receipt');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Panel Commercante — La Clé des Châteaux
