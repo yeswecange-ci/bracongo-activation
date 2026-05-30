@@ -104,16 +104,36 @@ $nextAction = match($order->status) {
 </form>
 @endif
 
-{{-- Bouton annuler --}}
-<form method="POST" action="{{ route('commercant.orders.status', $order->order_ref) }}" class="mb-4"
-      onsubmit="return confirm('Confirmer l\'annulation de cette commande ?')">
-    @csrf
-    <input type="hidden" name="status" value="cancelled">
-    <button type="submit"
+{{-- Refus / Annulation avec motif --}}
+<div class="mb-4">
+    <button onclick="document.getElementById('refus-panel').classList.toggle('hidden')"
         class="w-full py-3 rounded-2xl font-semibold text-sm text-red-600 border-2 border-red-200 bg-white active:bg-red-50 transition-colors">
-        ❌ Annuler la commande
+        ❌ Refuser / Annuler la commande
     </button>
-</form>
+    <div id="refus-panel" class="hidden mt-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+        <p class="text-xs font-bold text-red-600 mb-2 uppercase tracking-wide">Motif (obligatoire)</p>
+        <form method="POST" action="{{ route('commercant.orders.status', $order->order_ref) }}"
+              onsubmit="return document.getElementById('refus-notes').value.trim().length >= 5 || (alert('Indiquez un motif (min. 5 caractères)'), false)">
+            @csrf
+            <input type="hidden" name="status" value="cancelled">
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                @foreach(['Rupture de stock', 'Zone non couverte', 'Client injoignable', 'Commande incorrecte'] as $motif)
+                <button type="button" onclick="document.getElementById('refus-notes').value='{{ $motif }}'"
+                    class="text-xs px-3 py-2 rounded-xl bg-white border border-red-200 text-red-600 active:bg-red-100 text-left transition-colors">
+                    {{ $motif }}
+                </button>
+                @endforeach
+            </div>
+            <textarea id="refus-notes" name="notes" rows="2" required minlength="5"
+                class="w-full border border-red-200 rounded-xl px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+                placeholder="Précisez le motif…">{{ old('notes') }}</textarea>
+            <button type="submit"
+                class="w-full py-3 rounded-xl font-bold text-sm text-white bg-red-500 active:bg-red-600 transition-colors">
+                Confirmer le refus
+            </button>
+        </form>
+    </div>
+</div>
 @endif
 
 {{-- Contact client WhatsApp --}}

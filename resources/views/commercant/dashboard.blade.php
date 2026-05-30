@@ -3,8 +3,22 @@
 
 @section('content')
 
-{{-- Stats --}}
-<div class="grid grid-cols-2 gap-3 mb-6">
+{{-- Alerte commandes libres --}}
+@if($stats['unclaimed'] > 0)
+<a href="{{ route('commercant.orders.index', ['status' => 'received']) }}"
+   class="block bg-orange-500 rounded-2xl p-4 mb-4 shadow-sm active:bg-orange-600 transition-colors">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-white font-bold">{{ $stats['unclaimed'] }} commande(s) libre(s) 🔓</p>
+            <p class="text-orange-100 text-sm mt-0.5">Non assignées — cliquez pour les prendre →</p>
+        </div>
+        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">🙋</div>
+    </div>
+</a>
+@endif
+
+{{-- Stats globales --}}
+<div class="grid grid-cols-2 gap-3 mb-4">
     <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-blue-500">
         <p class="text-xs text-gray-500 font-medium mb-1">Nouvelles</p>
         <p class="text-4xl font-bold text-gray-900">{{ $stats['received'] }}</p>
@@ -24,6 +38,25 @@
         <p class="text-xs text-gray-500 font-medium mb-1">CA total</p>
         <p class="text-3xl font-bold text-gray-900">{{ number_format($stats['revenue'], 0) }}<span class="text-lg ml-1">$</span></p>
         <p class="text-xs text-gray-400 font-medium mt-1">{{ $stats['total'] }} commandes</p>
+    </div>
+</div>
+
+{{-- Mes stats perso --}}
+<div class="bg-gray-900 rounded-2xl p-4 mb-5">
+    <p class="text-xs text-yellow-500 font-bold uppercase tracking-widest mb-3">Mes performances</p>
+    <div class="grid grid-cols-3 gap-3">
+        <div class="text-center">
+            <p class="text-2xl font-black text-white">{{ $myStats['delivered'] }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Livrées</p>
+        </div>
+        <div class="text-center border-x border-white/10">
+            <p class="text-2xl font-black text-white">{{ $myStats['today'] }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Auj.</p>
+        </div>
+        <div class="text-center">
+            <p class="text-xl font-black text-yellow-400">{{ number_format($myStats['revenue'], 0) }}$</p>
+            <p class="text-xs text-gray-400 mt-0.5">Mon CA</p>
+        </div>
     </div>
 </div>
 
