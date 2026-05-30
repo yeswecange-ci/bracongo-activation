@@ -170,6 +170,7 @@ class LckController extends Controller
             'customer_phone'    => 'required|string|max:50',
             'customer_name'     => 'nullable|string|max:100',
             'customer_location' => 'nullable|string|max:200',
+            'payment_method'    => 'nullable|in:cash_on_delivery,online',
         ]);
 
         if ($validator->fails()) {
@@ -203,6 +204,8 @@ class LckController extends Controller
             $orderRef = LckOrder::generateRef();
 
             // Créer la commande
+            $paymentMethod = $request->payment_method ?? 'cash_on_delivery';
+
             $order = LckOrder::create([
                 'order_ref'         => $orderRef,
                 'cart_session_id'   => $cart->id,
@@ -211,6 +214,8 @@ class LckController extends Controller
                 'customer_location' => $location,
                 'total'             => $cart->total,
                 'status'            => LckOrder::STATUS_RECEIVED,
+                'payment_method'    => $paymentMethod,
+                'payment_status'    => 'pending',
             ]);
 
             // Créer les lignes de commande + décrémenter le stock
@@ -247,14 +252,20 @@ class LckController extends Controller
             // Notifier les commercantes
             $this->notifications->notifyCommercanteNewOrder($order);
 
-            $confirmText = "✅ *Commande confirmée!*\n\n"
-                . "Référence: *{$orderRef}*\n"
-                . "Total: *" . number_format($cart->total, 2) . " \$*\n\n"
-                . "Notre équipe prépare votre commande. Vous recevrez un message dès qu'elle sera prête. 🍷";
+            $paymentLine = $paymentMethod === 'cash_on_delivery'
+                ? "💵 Paiement : À la livraison\n\n"
+                : "📱 Paiement : Mobile Money (lien envoyé séparément)\n\n";
+
+            $confirmText = "✅ *Commande confirmée !*\n\n"
+                . "Référence : *{$orderRef}*\n"
+                . "Total : *" . number_format($cart->total, 2) . " \$*\n"
+                . $paymentLine
+                . "Notre équipe prépare votre commande. Vous serez averti(e) dès qu'elle sera en route. 🍷";
 
             return response()->json([
                 'success'        => true,
                 'order_ref'      => $orderRef,
+                'payment_method' => $paymentMethod,
                 'status'         => LckOrder::STATUS_RECEIVED,
                 'confirm_text'   => $confirmText,
                 'total'          => number_format($cart->total, 2),

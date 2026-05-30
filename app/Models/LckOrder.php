@@ -20,6 +20,11 @@ class LckOrder extends Model
         'total',
         'status',
         'notes',
+        'payment_method',
+        'payment_status',
+        'payment_reference',
+        'amount_paid',
+        'paid_at',
         'confirmed_at',
         'ready_at',
         'delivered_at',
@@ -27,10 +32,45 @@ class LckOrder extends Model
 
     protected $casts = [
         'total'        => 'decimal:2',
+        'amount_paid'  => 'decimal:2',
         'confirmed_at' => 'datetime',
         'ready_at'     => 'datetime',
         'delivered_at' => 'datetime',
+        'paid_at'      => 'datetime',
     ];
+
+    const PAYMENT_CASH   = 'cash_on_delivery';
+    const PAYMENT_ONLINE = 'online';
+
+    const PAYMENT_STATUS_PENDING  = 'pending';
+    const PAYMENT_STATUS_PAID     = 'paid';
+    const PAYMENT_STATUS_FAILED   = 'failed';
+    const PAYMENT_STATUS_REFUNDED = 'refunded';
+
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return match ($this->payment_method) {
+            'cash_on_delivery' => '💵 À la livraison',
+            'online'           => '📱 Mobile Money',
+            default            => $this->payment_method,
+        };
+    }
+
+    public function getPaymentStatusLabelAttribute(): string
+    {
+        return match ($this->payment_status) {
+            'pending'  => 'En attente',
+            'paid'     => 'Payé',
+            'failed'   => 'Échoué',
+            'refunded' => 'Remboursé',
+            default    => $this->payment_status,
+        };
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
 
     const STATUS_RECEIVED  = 'received';
     const STATUS_CONFIRMED = 'confirmed';

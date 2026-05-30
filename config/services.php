@@ -40,9 +40,19 @@ return [
     ],
 
     'twilio' => [
-        'account_sid' => env('TWILIO_ACCOUNT_SID'),
-        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'account_sid'   => env('TWILIO_ACCOUNT_SID'),
+        'auth_token'    => env('TWILIO_AUTH_TOKEN'),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886'),
+    ],
+
+    'payment' => [
+        'online_driver' => env('PAYMENT_ONLINE_DRIVER', 'cinetpay'),
+    ],
+
+    'cinetpay' => [
+        'api_key'    => env('CINETPAY_API_KEY', ''),
+        'site_id'    => env('CINETPAY_SITE_ID', ''),
+        'notify_url' => env('CINETPAY_NOTIFY_URL', ''),
     ],
 
 ];

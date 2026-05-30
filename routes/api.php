@@ -97,6 +97,11 @@ Route::prefix('lck')->group(function () {
 
     // Mise à jour statut depuis le dashboard commercante
     Route::put('/order/{ref}/status', [LckController::class, 'updateOrderStatus'])->name('api.lck.order.status');
+
+    // Paiement — initiation, webhook, vérification
+    Route::post('/payment/initiate', [\App\Http\Controllers\Api\LckPaymentController::class, 'initiate'])->name('api.lck.payment.initiate');
+    Route::post('/payment/callback', [\App\Http\Controllers\Api\LckPaymentController::class, 'callback'])->name('api.lck.payment.callback');
+    Route::post('/payment/verify',   [\App\Http\Controllers\Api\LckPaymentController::class, 'verify'])->name('api.lck.payment.verify');
 });
 
 // Routes API authentifiées (pour future app mobile par exemple)

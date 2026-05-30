@@ -80,6 +80,19 @@ class LckNotificationService
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Paiement en ligne confirmé → notifier le client
+    // ─────────────────────────────────────────────────────────────
+    public function notifyCustomerPaymentConfirmed(LckOrder $order): void
+    {
+        $message = "✅ *Paiement reçu — La Clé des Châteaux*\n\n"
+            . "Référence commande : *{$order->order_ref}*\n"
+            . "Montant payé : *" . number_format($order->amount_paid ?? $order->total, 2) . " \$*\n\n"
+            . "Votre commande est en cours de préparation. Vous serez averti(e) dès qu'elle sera en route. 🍷";
+
+        $this->whatsapp->sendMessage($order->customer_phone, $message);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // En préparation → notifier le client
     // ─────────────────────────────────────────────────────────────
     public function notifyCustomerOrderPreparing(LckOrder $order): void

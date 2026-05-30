@@ -45,6 +45,19 @@
             <p class="font-semibold text-gray-800 text-sm">{{ $order->customer_location }}</p>
         </div>
         @endif
+        <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-xs text-gray-400 font-medium mb-0.5">Paiement</p>
+            <p class="font-semibold text-gray-800 text-sm">{{ $order->payment_method_label }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-3">
+            <p class="text-xs text-gray-400 font-medium mb-0.5">Statut paiement</p>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
+                @if($order->payment_status === 'paid') bg-green-100 text-green-700
+                @elseif($order->payment_status === 'failed') bg-red-100 text-red-600
+                @else bg-yellow-100 text-yellow-700 @endif">
+                {{ $order->payment_status_label }}
+            </span>
+        </div>
         @if($order->commercant)
         <div class="bg-gray-50 rounded-xl p-3 col-span-2">
             <p class="text-xs text-gray-400 font-medium mb-0.5">Traitée par</p>
