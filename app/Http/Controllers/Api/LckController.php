@@ -99,8 +99,16 @@ class LckController extends Controller
                 'expires_at'     => $cart->expires_at->toIso8601String(),
             ]);
         } catch (\Exception $e) {
-            Log::error('LCK createCart error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Erreur serveur.'], 500);
+            Log::error('LCK createCart error', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile() . ':' . $e->getLine(),
+                'input'   => $request->all(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur serveur.',
+                'debug'   => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
         }
     }
 
@@ -409,44 +417,47 @@ class LckController extends Controller
     // ─────────────────────────────────────────────────────────────
     private function syncProductFromWooCommerce(int $wooId, array $item): ?LckProduct
     {
-        // Si pas de données WooCommerce fournies, cherche uniquement en base
+        // Sans données WooCommerce : cherche uniquement en base
         if (empty($item['name']) || !isset($item['price'])) {
             return LckProduct::where('wordpress_product_id', $wooId)->first()
                 ?? LckProduct::find($wooId);
         }
 
-        $categoryId = null;
-        if (!empty($item['category'])) {
-            $catName    = trim($item['category']);
-            $catSlug    = \Illuminate\Support\Str::slug($catName);
-            $category   = LckCategory::firstOrCreate(
-                ['slug' => $catSlug],
-                ['name' => $catName, 'is_active' => true, 'sort_order' => 0]
-            );
-            $categoryId = $category->id;
-        }
+        // Résolution de la catégorie — toujours garantir un category_id valide
+        // car la colonne est NOT NULL en base.
+        $catName = !empty($item['category']) ? trim($item['category']) : 'Général';
+        $catSlug = \Illuminate\Support\Str::slug($catName) ?: 'general';
+
+        $category = LckCategory::firstOrCreate(
+            ['slug' => $catSlug],
+            ['name' => $catName, 'is_active' => true, 'sort_order' => 99]
+        );
 
         $name = trim($item['name']);
-        $slug = \Illuminate\Support\Str::slug($name . '-' . $wooId);
+        $price = (float) $item['price'];
 
+        // Cherche le produit existant par woo_id
         $product = LckProduct::where('wordpress_product_id', $wooId)->first();
 
         if ($product) {
-            // Met à jour uniquement les données WooCommerce (pas les flags de dispo)
+            // Met à jour nom, prix, catégorie — sans toucher is_available/is_active
             $product->update([
-                'name'                => $name,
-                'whatsapp_label'      => $name,
-                'price'               => (float) $item['price'],
-                'category_id'         => $categoryId ?? $product->category_id,
+                'name'           => $name,
+                'whatsapp_label' => $name,
+                'price'          => $price,
+                'category_id'    => $category->id,
             ]);
         } else {
+            // Slug unique : nom + woo_id pour éviter toute collision
+            $slug = \Illuminate\Support\Str::slug($name . '-woo-' . $wooId);
+
             $product = LckProduct::create([
                 'wordpress_product_id' => $wooId,
                 'name'                 => $name,
                 'slug'                 => $slug,
                 'whatsapp_label'       => $name,
-                'price'                => (float) $item['price'],
-                'category_id'          => $categoryId,
+                'price'                => $price,
+                'category_id'          => $category->id,
                 'is_available'         => true,
                 'is_active'            => true,
                 'sort_order'           => 0,
@@ -455,6 +466,7 @@ class LckController extends Controller
             Log::info('LCK Product auto-created from WooCommerce', [
                 'woo_id' => $wooId,
                 'name'   => $name,
+                'price'  => $price,
             ]);
         }
 
