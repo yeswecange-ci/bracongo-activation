@@ -95,6 +95,16 @@ class OrderController extends Controller
             ->with('success', "Statut mis à jour : {$order->fresh()->status_label}");
     }
 
+    public function destroy(string $ref)
+    {
+        $order = LckOrder::where('order_ref', $ref)->firstOrFail();
+        $order->items()->delete();
+        $order->delete();
+
+        return redirect()->route('commercant.orders.index')
+            ->with('success', "Commande {$ref} supprimée.");
+    }
+
     public function export(Request $request)
     {
         $query = LckOrder::with('items')->orderByDesc('created_at');

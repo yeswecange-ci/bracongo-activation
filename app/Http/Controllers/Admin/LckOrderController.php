@@ -79,6 +79,16 @@ class LckOrderController extends Controller
             ->with('success', 'Statut mis à jour.');
     }
 
+    public function destroy(string $ref)
+    {
+        $order = LckOrder::where('order_ref', $ref)->firstOrFail();
+        $order->items()->delete();
+        $order->delete();
+
+        return redirect()->route('admin.lck.orders.index')
+            ->with('success', "Commande {$ref} supprimée.");
+    }
+
     private function exportCsv(Request $request)
     {
         $query = LckOrder::with(['items', 'commercant'])->orderByDesc('created_at');

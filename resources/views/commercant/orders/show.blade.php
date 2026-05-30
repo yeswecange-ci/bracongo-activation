@@ -39,6 +39,12 @@
             <p class="text-xs text-gray-400 font-medium mb-0.5">Téléphone</p>
             <p class="font-semibold text-gray-800 text-sm">{{ $order->customer_phone }}</p>
         </div>
+        @if($order->customer_location)
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3 col-span-2">
+            <p class="text-xs text-yellow-600 font-medium mb-0.5">📍 Zone / Adresse</p>
+            <p class="font-semibold text-gray-800 text-sm">{{ $order->customer_location }}</p>
+        </div>
+        @endif
         @if($order->commercant)
         <div class="bg-gray-50 rounded-xl p-3 col-span-2">
             <p class="text-xs text-gray-400 font-medium mb-0.5">Traitée par</p>
@@ -124,6 +130,19 @@ $nextAction = match($order->status) {
         <span class="font-black text-2xl text-gray-900">{{ number_format($order->total, 2) }} $</span>
     </div>
 </div>
+
+{{-- Supprimer la commande --}}
+@if(in_array($order->status, ['cancelled', 'delivered']))
+<form method="POST" action="{{ route('commercant.orders.destroy', $order->order_ref) }}" class="mb-4"
+      onsubmit="return confirm('Supprimer définitivement cette commande ? Cette action est irréversible.')">
+    @csrf
+    @method('DELETE')
+    <button type="submit"
+        class="w-full py-3 rounded-2xl font-semibold text-xs text-gray-400 border border-gray-200 bg-white active:bg-gray-50 transition-colors">
+        🗑 Supprimer cette commande
+    </button>
+</form>
+@endif
 
 {{-- Notes --}}
 @if($order->notes)

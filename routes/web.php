@@ -198,6 +198,8 @@ Route::prefix('admin')->group(function () {
                 ->name('admin.lck.orders.show');
             Route::post('orders/{ref}/status', [\App\Http\Controllers\Admin\LckOrderController::class, 'updateStatus'])
                 ->name('admin.lck.orders.status');
+            Route::delete('orders/{ref}', [\App\Http\Controllers\Admin\LckOrderController::class, 'destroy'])
+                ->name('admin.lck.orders.destroy');
 
             // Produits
             Route::get('products', [\App\Http\Controllers\Admin\LckProductController::class, 'index'])
@@ -257,6 +259,8 @@ Route::prefix('commercant')->group(function () {
             ->name('commercant.orders.show');
         Route::post('/orders/{ref}/status', [\App\Http\Controllers\Commercant\OrderController::class, 'updateStatus'])
             ->name('commercant.orders.status');
+        Route::delete('/orders/{ref}', [\App\Http\Controllers\Commercant\OrderController::class, 'destroy'])
+            ->name('commercant.orders.destroy');
 
         // Catalogue (caviste seulement)
         Route::get('/products', [\App\Http\Controllers\Commercant\ProductController::class, 'index'])
