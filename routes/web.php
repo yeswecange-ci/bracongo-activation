@@ -200,6 +200,8 @@ Route::prefix('admin')->group(function () {
                 ->name('admin.lck.orders.status');
             Route::delete('orders/{ref}', [\App\Http\Controllers\Admin\LckOrderController::class, 'destroy'])
                 ->name('admin.lck.orders.destroy');
+            Route::get('reports', [\App\Http\Controllers\Admin\LckReportController::class, 'index'])
+                ->name('admin.lck.reports');
 
             // Produits
             Route::get('products', [\App\Http\Controllers\Admin\LckProductController::class, 'index'])
@@ -261,6 +263,8 @@ Route::prefix('commercant')->group(function () {
             ->name('commercant.orders.status');
         Route::delete('/orders/{ref}', [\App\Http\Controllers\Commercant\OrderController::class, 'destroy'])
             ->name('commercant.orders.destroy');
+        Route::get('/orders/{ref}/print', [\App\Http\Controllers\Commercant\OrderController::class, 'printOrder'])
+            ->name('commercant.orders.print');
         Route::post('/orders/{ref}/claim', [\App\Http\Controllers\Commercant\OrderController::class, 'claim'])
             ->name('commercant.orders.claim');
         Route::get('/pending-count', [\App\Http\Controllers\Commercant\OrderController::class, 'pendingCount'])

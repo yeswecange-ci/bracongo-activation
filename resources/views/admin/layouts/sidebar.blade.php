@@ -207,6 +207,15 @@
             <span class="font-medium">Commercantes</span>
         </a>
 
+        <!-- LCK Rapports -->
+        <a href="{{ route('admin.lck.reports') }}"
+            class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all rounded-lg group {{ request()->routeIs('admin.lck.reports') ? 'bg-gradient-to-r from-yellow-700 to-yellow-800 text-white shadow-lg' : '' }}">
+            <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.lck.reports') ? 'text-white' : 'text-gray-400 group-hover:text-yellow-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <span class="font-medium">Rapports</span>
+        </a>
+
         <!-- Divider -->
         <div class="border-t border-gray-700 my-3"></div>
 

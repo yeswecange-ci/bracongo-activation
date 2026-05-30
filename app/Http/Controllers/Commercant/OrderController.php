@@ -131,6 +131,12 @@ class OrderController extends Controller
             ->with('success', "Statut mis à jour : {$order->fresh()->status_label}");
     }
 
+    public function printOrder(string $ref)
+    {
+        $order = LckOrder::with(['items', 'commercant'])->where('order_ref', $ref)->firstOrFail();
+        return view('commercant.orders.print', compact('order'));
+    }
+
     public function destroy(string $ref)
     {
         $order = LckOrder::where('order_ref', $ref)->firstOrFail();

@@ -149,6 +149,12 @@ $nextAction = match($order->status) {
 </div>
 @endif
 
+{{-- Imprimer le bon --}}
+<a href="{{ route('commercant.orders.print', $order->order_ref) }}" target="_blank"
+   class="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-white border border-gray-200 text-gray-600 font-semibold text-sm shadow-sm active:bg-gray-50 transition-colors mb-4">
+    🖨️ Imprimer le bon de commande
+</a>
+
 {{-- Contact client WhatsApp --}}
 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $order->customer_phone) }}"
    target="_blank"
@@ -183,6 +189,42 @@ $nextAction = match($order->status) {
         <span class="font-black text-2xl text-gray-900">{{ number_format($order->total, 2) }} $</span>
     </div>
 </div>
+
+{{-- Historique client --}}
+@php
+    $clientHistory = \App\Models\LckOrder::where('customer_phone', $order->customer_phone)
+        ->where('id', '!=', $order->id)
+        ->orderByDesc('created_at')
+        ->limit(5)
+        ->get();
+@endphp
+@if($clientHistory->isNotEmpty())
+<div class="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100">
+        <h3 class="font-bold text-gray-800 text-sm">Autres commandes de ce client</h3>
+    </div>
+    <div class="divide-y divide-gray-50">
+        @foreach($clientHistory as $h)
+        <a href="{{ route('commercant.orders.show', $h->order_ref) }}"
+           class="flex items-center justify-between px-5 py-3 active:bg-gray-50 transition-colors">
+            <div>
+                <p class="font-mono text-xs font-bold text-gray-700">{{ $h->order_ref }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ $h->created_at->format('d/m/Y') }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-bold text-gray-800">{{ number_format($h->total, 2) }} $</p>
+                <span class="text-xs px-2 py-0.5 rounded-full
+                    @if($h->status === 'delivered') bg-gray-100 text-gray-500
+                    @elseif($h->status === 'cancelled') bg-red-100 text-red-500
+                    @else bg-yellow-100 text-yellow-700 @endif">
+                    {{ $h->status_label }}
+                </span>
+            </div>
+        </a>
+        @endforeach
+    </div>
+</div>
+@endif
 
 {{-- Supprimer la commande --}}
 @if(in_array($order->status, ['cancelled', 'delivered']))
