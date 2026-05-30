@@ -54,6 +54,26 @@
     </div>
 </div>
 
+{{-- Réclamation commande --}}
+@php $myId = auth('commercant')->id(); @endphp
+@if(!$order->commercant_id && !in_array($order->status, ['delivered','cancelled']))
+<form method="POST" action="{{ route('commercant.orders.claim', $order->order_ref) }}" class="mb-4">
+    @csrf
+    <button type="submit"
+        class="w-full py-4 rounded-2xl font-bold text-base text-white bg-orange-500 shadow-md active:opacity-90 transition-opacity">
+        🙋 Je prends cette commande
+    </button>
+</form>
+@elseif($order->commercant_id && $order->commercant_id !== $myId)
+<div class="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-2xl flex items-center gap-3">
+    <span class="text-2xl">⚠️</span>
+    <div>
+        <p class="text-sm font-bold text-orange-700">Commande déjà prise</p>
+        <p class="text-xs text-orange-600 mt-0.5">Traitée par <strong>{{ $order->commercant->name }}</strong></p>
+    </div>
+</div>
+@endif
+
 {{-- Bouton action principal (sticky en haut si pas encore terminé) --}}
 @if(!in_array($order->status, ['delivered', 'cancelled']))
 @php

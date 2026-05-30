@@ -142,9 +142,8 @@
                     <svg class="w-6 h-6" fill="{{ request()->routeIs('commercant.orders.*') ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="{{ request()->routeIs('commercant.orders.*') ? '0' : '2' }}" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
-                    @if($pendingCount > 0)
-                    <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-1">{{ $pendingCount > 9 ? '9+' : $pendingCount }}</span>
-                    @endif
+                    <span data-pending-badge
+                          class="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold min-w-[16px] h-4 rounded-full flex items-center justify-center px-1 {{ $pendingCount > 0 ? '' : 'hidden' }}">{{ $pendingCount > 9 ? '9+' : $pendingCount }}</span>
                 </div>
                 <span class="text-[11px] font-semibold">Commandes</span>
             </a>
@@ -173,5 +172,31 @@
         </div>
     </nav>
 
+<script>
+// Auto-refresh badge nouvelles commandes toutes les 30s
+(function () {
+    const INTERVAL = 30000;
+    const badges   = document.querySelectorAll('[data-pending-badge]');
+    if (!badges.length) return;
+
+    async function refreshCount() {
+        try {
+            const res  = await fetch('{{ route("commercant.pending-count") }}', { credentials: 'same-origin' });
+            const data = await res.json();
+            const count = data.received ?? 0;
+            badges.forEach(el => {
+                if (count > 0) {
+                    el.textContent = count > 9 ? '9+' : count;
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        } catch (_) {}
+    }
+
+    setInterval(refreshCount, INTERVAL);
+})();
+</script>
 </body>
 </html>

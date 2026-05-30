@@ -3,6 +3,26 @@
 
 @section('content')
 
+{{-- Toggle Toutes / Mes commandes --}}
+<div class="flex gap-2 mb-3">
+    <a href="{{ request()->fullUrlWithQuery(['mine' => 0, 'page' => 1]) }}"
+       class="flex-1 text-center py-2.5 rounded-xl text-sm font-semibold border transition-colors
+           {{ !$mine ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200' }}">
+        Toutes
+    </a>
+    <a href="{{ request()->fullUrlWithQuery(['mine' => 1, 'page' => 1]) }}"
+       class="flex-1 text-center py-2.5 rounded-xl text-sm font-semibold border transition-colors
+           {{ $mine ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200' }}">
+        Mes commandes
+    </a>
+    @if($counts['unclaimed'] > 0)
+    <a href="{{ request()->fullUrlWithQuery(['mine' => 0, 'status' => 'received', 'page' => 1]) }}"
+       class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 text-white border border-orange-500">
+        🔓 <span>{{ $counts['unclaimed'] }} libre{{ $counts['unclaimed'] > 1 ? 's' : '' }}</span>
+    </a>
+    @endif
+</div>
+
 {{-- Filtres par statut (scroll horizontal) --}}
 <div class="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4 scrollbar-none" style="scrollbar-width:none">
     @foreach([
@@ -67,6 +87,9 @@
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 flex-wrap mb-1.5">
                     <span class="font-mono font-bold text-gray-800">{{ $order->order_ref }}</span>
+                    @if(!$order->commercant_id && !in_array($order->status, ['delivered','cancelled']))
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-600">🔓 Libre</span>
+                    @endif
                     <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold
                         @if($order->status === 'received') bg-blue-100 text-blue-700
                         @elseif($order->status === 'confirmed') bg-indigo-100 text-indigo-700

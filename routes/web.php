@@ -261,6 +261,10 @@ Route::prefix('commercant')->group(function () {
             ->name('commercant.orders.status');
         Route::delete('/orders/{ref}', [\App\Http\Controllers\Commercant\OrderController::class, 'destroy'])
             ->name('commercant.orders.destroy');
+        Route::post('/orders/{ref}/claim', [\App\Http\Controllers\Commercant\OrderController::class, 'claim'])
+            ->name('commercant.orders.claim');
+        Route::get('/pending-count', [\App\Http\Controllers\Commercant\OrderController::class, 'pendingCount'])
+            ->name('commercant.pending-count');
 
         // Catalogue (caviste seulement)
         Route::get('/products', [\App\Http\Controllers\Commercant\ProductController::class, 'index'])

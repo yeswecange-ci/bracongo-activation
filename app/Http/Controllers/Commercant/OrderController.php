@@ -14,18 +14,22 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
+        $me    = Auth::guard('commercant')->id();
+        $mine  = $request->boolean('mine');
         $query = LckOrder::with('items')->orderByDesc('created_at');
 
-        // Filtres
+        if ($mine) {
+            $query->where('commercant_id', $me);
+        }
         if ($request->status && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
         if ($request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('order_ref', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%")
-                  ->orWhere('customer_phone', 'like', "%{$search}%");
+            $s = $request->search;
+            $query->where(function ($q) use ($s) {
+                $q->where('order_ref', 'like', "%{$s}%")
+                  ->orWhere('customer_name', 'like', "%{$s}%")
+                  ->orWhere('customer_phone', 'like', "%{$s}%");
             });
         }
         if ($request->date) {
@@ -34,17 +38,47 @@ class OrderController extends Controller
 
         $orders = $query->paginate(15)->withQueryString();
 
+        $base = $mine ? LckOrder::where('commercant_id', $me) : LckOrder::query();
         $counts = [
-            'all'       => LckOrder::count(),
-            'received'  => LckOrder::where('status', 'received')->count(),
-            'confirmed' => LckOrder::where('status', 'confirmed')->count(),
-            'preparing' => LckOrder::where('status', 'preparing')->count(),
-            'ready'     => LckOrder::where('status', 'ready')->count(),
-            'delivered' => LckOrder::where('status', 'delivered')->count(),
-            'cancelled' => LckOrder::where('status', 'cancelled')->count(),
+            'all'       => (clone $base)->count(),
+            'received'  => (clone $base)->where('status', 'received')->count(),
+            'confirmed' => (clone $base)->where('status', 'confirmed')->count(),
+            'preparing' => (clone $base)->where('status', 'preparing')->count(),
+            'ready'     => (clone $base)->where('status', 'ready')->count(),
+            'delivered' => (clone $base)->where('status', 'delivered')->count(),
+            'cancelled' => (clone $base)->where('status', 'cancelled')->count(),
+            'unclaimed' => LckOrder::whereNull('commercant_id')->whereNotIn('status', ['delivered','cancelled'])->count(),
         ];
 
-        return view('commercant.orders.index', compact('orders', 'counts'));
+        return view('commercant.orders.index', compact('orders', 'counts', 'mine'));
+    }
+
+    // Réclamer une commande non assignée
+    public function claim(string $ref)
+    {
+        $order = LckOrder::where('order_ref', $ref)
+            ->whereNull('commercant_id')
+            ->whereNotIn('status', ['delivered', 'cancelled'])
+            ->first();
+
+        if (!$order) {
+            return redirect()->route('commercant.orders.show', $ref)
+                ->with('error', 'Cette commande est déjà prise ou n\'existe pas.');
+        }
+
+        $order->update(['commercant_id' => Auth::guard('commercant')->id()]);
+
+        return redirect()->route('commercant.orders.show', $ref)
+            ->with('success', '✅ Commande réclamée — vous êtes responsable de cette commande.');
+    }
+
+    // Endpoint JSON pour le polling du badge (auto-refresh)
+    public function pendingCount()
+    {
+        return response()->json([
+            'received'  => LckOrder::where('status', 'received')->count(),
+            'unclaimed' => LckOrder::whereNull('commercant_id')->where('status', 'received')->count(),
+        ]);
     }
 
     public function show(string $ref)
