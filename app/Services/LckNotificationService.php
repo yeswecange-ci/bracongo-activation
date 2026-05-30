@@ -23,25 +23,60 @@ class LckNotificationService
             $itemsText .= "• {$item->product_name} × {$item->quantity} = " . number_format($item->subtotal, 2) . " $\n";
         }
 
+        $locationLine = $order->customer_location
+            ? "Zone: *{$order->customer_location}*\n"
+            : '';
+
         $message = "🔔 *Nouvelle commande LCK*\n\n"
             . "Référence: *{$order->order_ref}*\n"
             . "Client: " . ($order->customer_name ?? 'Non renseigné') . "\n"
-            . "Tél: {$order->customer_phone}\n\n"
+            . "Tél: {$order->customer_phone}\n"
+            . $locationLine . "\n"
             . "*Produits:*\n{$itemsText}\n"
             . "*Total: " . number_format($order->total, 2) . " $*\n\n"
             . "👉 Connectez-vous au dashboard pour traiter cette commande.";
 
-        $commercantes = Commercant::where('is_active', true)->get();
+        // Cherche les commercants couvrant la zone du client
+        $commercantes = $this->resolveCommercantsForOrder($order);
 
         foreach ($commercantes as $commercante) {
-            // Notification WhatsApp
             if ($commercante->phone) {
                 $this->whatsapp->sendMessage($commercante->phone, $message);
             }
-
-            // Notification email
             $this->sendEmailToCommercante($commercante, $order, $itemsText);
         }
+
+        Log::info('LCK Notification envoyée', [
+            'order_ref'   => $order->order_ref,
+            'location'    => $order->customer_location,
+            'commercants' => $commercantes->pluck('name')->toArray(),
+            'broadcast'   => $commercantes->count() > 1 ? 'all' : 'zone',
+        ]);
+    }
+
+    // Trouve le(s) commercant(s) couvrant la zone du client.
+    // Fallback : tous les commercants actifs si aucune correspondance.
+    private function resolveCommercantsForOrder(LckOrder $order): \Illuminate\Support\Collection
+    {
+        $location = strtolower(trim($order->customer_location ?? ''));
+
+        $all = Commercant::where('is_active', true)->get();
+
+        if (!$location) {
+            return $all;
+        }
+
+        $matched = $all->filter(function (Commercant $c) use ($location) {
+            foreach ((array) ($c->zones ?? []) as $zone) {
+                $zone = strtolower(trim($zone));
+                if ($zone && (str_contains($location, $zone) || str_contains($zone, $location))) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        return $matched->isNotEmpty() ? $matched : $all;
     }
 
     // ─────────────────────────────────────────────────────────────

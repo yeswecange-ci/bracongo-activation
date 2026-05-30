@@ -73,6 +73,16 @@
                 </div>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    Zones couvertes
+                    <span class="text-xs text-gray-400 font-normal ml-1">— une zone par ligne (quartiers, communes…)</span>
+                </label>
+                <textarea name="zones" rows="4" placeholder="Gombe&#10;Ngaliema&#10;Kintambo&#10;Limete"
+                          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent font-mono"></textarea>
+                <p class="text-xs text-gray-400 mt-1">Si aucune zone définie, ce commercant reçoit toutes les commandes sans correspondance de zone.</p>
+            </div>
+
             <label class="flex items-center gap-2.5 cursor-pointer">
                 <input type="checkbox" name="is_active" value="1" checked class="w-4 h-4 accent-yellow-600 rounded">
                 <span class="text-sm text-gray-700">Compte actif (peut se connecter immédiatement)</span>

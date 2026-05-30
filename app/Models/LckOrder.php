@@ -16,6 +16,7 @@ class LckOrder extends Model
         'commercant_id',
         'customer_phone',
         'customer_name',
+        'customer_location',
         'total',
         'status',
         'notes',

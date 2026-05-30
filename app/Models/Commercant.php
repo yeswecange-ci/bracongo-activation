@@ -17,6 +17,7 @@ class Commercant extends Authenticatable
         'email',
         'password',
         'phone',
+        'zones',
         'role',
         'is_active',
     ];
@@ -29,6 +30,7 @@ class Commercant extends Authenticatable
     protected $casts = [
         'password'  => 'hashed',
         'is_active' => 'boolean',
+        'zones'     => 'array',
     ];
 
     const ROLE_COMMERCIAL = 'commercial';

@@ -31,6 +31,7 @@ class LckCommerçantController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active', true);
+        $data['zones']     = $this->parseZones($request->input('zones', ''));
 
         Commercant::create($data);
 
@@ -55,6 +56,7 @@ class LckCommerçantController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
+        $data['zones']     = $this->parseZones($request->input('zones', ''));
 
         if (!$request->filled('password')) {
             unset($data['password']);
@@ -71,6 +73,15 @@ class LckCommerçantController extends Controller
         $commercant->delete();
         return redirect()->route('admin.lck.commercants.index')
             ->with('success', "Compte supprimé.");
+    }
+
+    private function parseZones(string $raw): array
+    {
+        return collect(explode("\n", $raw))
+            ->map(fn($z) => trim($z))
+            ->filter(fn($z) => $z !== '')
+            ->values()
+            ->all();
     }
 
     public function toggleActive(Commercant $commercant)

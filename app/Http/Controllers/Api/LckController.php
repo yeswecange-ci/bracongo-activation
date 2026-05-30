@@ -166,9 +166,10 @@ class LckController extends Controller
     public function confirmOrder(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'token'          => 'required|string',
-            'customer_phone' => 'required|string|max:50',
-            'customer_name'  => 'nullable|string|max:100',
+            'token'             => 'required|string',
+            'customer_phone'    => 'required|string|max:50',
+            'customer_name'     => 'nullable|string|max:100',
+            'customer_location' => 'nullable|string|max:200',
         ]);
 
         if ($validator->fails()) {
@@ -196,17 +197,20 @@ class LckController extends Controller
                 'status'         => 'confirmed',
             ]);
 
+            $location = $request->customer_location;
+
             // Générer la référence de commande
             $orderRef = LckOrder::generateRef();
 
             // Créer la commande
             $order = LckOrder::create([
-                'order_ref'       => $orderRef,
-                'cart_session_id' => $cart->id,
-                'customer_phone'  => $request->customer_phone,
-                'customer_name'   => $request->customer_name,
-                'total'           => $cart->total,
-                'status'          => LckOrder::STATUS_RECEIVED,
+                'order_ref'         => $orderRef,
+                'cart_session_id'   => $cart->id,
+                'customer_phone'    => $phone,
+                'customer_name'     => $request->customer_name,
+                'customer_location' => $location,
+                'total'             => $cart->total,
+                'status'            => LckOrder::STATUS_RECEIVED,
             ]);
 
             // Créer les lignes de commande
