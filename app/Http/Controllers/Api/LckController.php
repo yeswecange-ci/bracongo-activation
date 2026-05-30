@@ -31,7 +31,7 @@ class LckController extends Controller
             'items.*.name'         => 'nullable|string|max:200',
             'items.*.price'        => 'nullable|numeric|min:0',
             'items.*.category'     => 'nullable|string|max:100',
-            'customer_phone'       => 'nullable|string|max:20',
+            'customer_phone'       => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -167,13 +167,16 @@ class LckController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'token'          => 'required|string',
-            'customer_phone' => 'required|string|max:20',
+            'customer_phone' => 'required|string|max:50',
             'customer_name'  => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
+
+        // Twilio envoie "whatsapp:+243XXXXXXXXX" — on garde uniquement le numéro
+        $phone = preg_replace('/^whatsapp:/i', '', $request->customer_phone);
 
         $cart = LckCartSession::where('token', $request->token)->first();
 
@@ -187,9 +190,8 @@ class LckController extends Controller
         try {
             DB::beginTransaction();
 
-            // Mettre à jour les infos client dans la session panier
             $cart->update([
-                'customer_phone' => $request->customer_phone,
+                'customer_phone' => $phone,
                 'customer_name'  => $request->customer_name,
                 'status'         => 'confirmed',
             ]);
