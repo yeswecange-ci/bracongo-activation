@@ -118,11 +118,13 @@ class OrderController extends Controller
         $order->update($updates);
 
         // Notifications client selon le statut
-        if ($request->status === 'ready') {
-            $this->notifications->notifyCustomerOrderReady($order);
-        } elseif ($request->status === 'cancelled') {
-            $this->notifications->notifyCustomerOrderCancelled($order, $request->notes ?? '');
-        }
+        match ($request->status) {
+            'preparing' => $this->notifications->notifyCustomerOrderPreparing($order->fresh()),
+            'ready'     => $this->notifications->notifyCustomerOrderReady($order->fresh()),
+            'delivered' => $this->notifications->notifyCustomerOrderOnTheWay($order->fresh()),
+            'cancelled' => $this->notifications->notifyCustomerOrderCancelled($order->fresh(), $request->notes ?? ''),
+            default     => null,
+        };
 
         return redirect()
             ->route('commercant.orders.show', $ref)

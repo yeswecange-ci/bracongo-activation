@@ -80,6 +80,33 @@ class LckNotificationService
     }
 
     // ─────────────────────────────────────────────────────────────
+    // En préparation → notifier le client
+    // ─────────────────────────────────────────────────────────────
+    public function notifyCustomerOrderPreparing(LckOrder $order): void
+    {
+        $message = "🔧 *Votre commande est en préparation !*\n\n"
+            . "Référence: *{$order->order_ref}*\n\n"
+            . "Notre équipe prépare vos articles. Vous serez averti(e) dès que la commande sera prête. 🍷\n\n"
+            . "_La Clé des Châteaux_";
+
+        $this->whatsapp->sendMessage($order->customer_phone, $message);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // En route → notifier le client avant livraison
+    // ─────────────────────────────────────────────────────────────
+    public function notifyCustomerOrderOnTheWay(LckOrder $order): void
+    {
+        $message = "🚗 *Votre commande est en route !*\n\n"
+            . "Référence: *{$order->order_ref}*\n\n"
+            . "Votre livreur est en chemin vers *{$order->customer_location}*.\n"
+            . "Restez disponible sur ce numéro. 📞\n\n"
+            . "_La Clé des Châteaux_";
+
+        $this->whatsapp->sendMessage($order->customer_phone, $message);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Confirmation de commande → notifier le client
     // ─────────────────────────────────────────────────────────────
     public function notifyCustomerOrderConfirmed(LckOrder $order): void
