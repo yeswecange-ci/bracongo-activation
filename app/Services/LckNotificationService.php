@@ -18,7 +18,7 @@ class LckNotificationService
     {
         $order->loadMissing('items');
 
-        $orderUrl  = rtrim(config('app.url'), '/') . '/commercant/orders/' . $order->order_ref;
+        $orderUrl  = url('/commercant/orders/' . $order->order_ref);
 
         $itemsText = '';
         foreach ($order->items as $item) {
@@ -92,7 +92,7 @@ class LckNotificationService
     // ─────────────────────────────────────────────────────────────
     public function notifyCommercantePaymentReceived(LckOrder $order): void
     {
-        $orderUrl  = rtrim(config('app.url'), '/') . '/commercant/orders/' . $order->order_ref;
+        $orderUrl  = url('/commercant/orders/' . $order->order_ref);
         $message   = "✅ *Paiement reçu — La Clé des Châteaux*\n\n"
             . "Référence : *{$order->order_ref}*\n"
             . "Client : " . ($order->customer_name ?? 'Non renseigné') . "\n"
