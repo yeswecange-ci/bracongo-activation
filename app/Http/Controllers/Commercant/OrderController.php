@@ -115,6 +115,15 @@ class OrderController extends Controller
             default     => null,
         };
 
+        // Cash on delivery : paiement automatiquement confirmé à la livraison
+        if ($request->status === 'delivered'
+            && $order->payment_method === 'cash_on_delivery'
+            && $order->payment_status === 'pending') {
+            $updates['payment_status'] = 'paid';
+            $updates['amount_paid']    = $order->total;
+            $updates['paid_at']        = now();
+        }
+
         $order->update($updates);
 
         // Notifications client selon le statut

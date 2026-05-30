@@ -29,6 +29,13 @@ class LckPaymentController extends Controller
 
         $order = LckOrder::where('order_ref', $request->order_ref)->firstOrFail();
 
+        if ($order->payment_method === 'cash_on_delivery') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette commande est à régler en espèces à la livraison.',
+            ], 400);
+        }
+
         if ($order->payment_status === 'paid') {
             return response()->json([
                 'success' => false,
@@ -81,11 +88,12 @@ class LckPaymentController extends Controller
             $amount = (float) ($payload['cpm_amount'] ?? $payload['amount'] ?? $order->total);
             $this->payments->markAsPaid($order, $reference, $amount);
 
-            // Notifier les commercants
-            $this->notifications->notifyCommercanteNewOrder($order->fresh());
-
-            // Notifier le client
+            // Notifier le client que son paiement est confirmé
             $this->notifications->notifyCustomerPaymentConfirmed($order->fresh());
+
+            // Notifier les commercants que le paiement est reçu (PAS notifyCommercanteNewOrder
+            // qui re-enverrait "nouvelle commande" — la commande existe déjà)
+            $this->notifications->notifyCommercantePaymentReceived($order->fresh());
 
             return response()->json(['status' => 'ok']);
         }

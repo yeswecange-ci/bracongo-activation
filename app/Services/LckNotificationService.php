@@ -87,6 +87,28 @@ class LckNotificationService
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Paiement en ligne reçu → notifier les commercants assignés
+    // (distinct de notifyCommercanteNewOrder — commande déjà connue)
+    // ─────────────────────────────────────────────────────────────
+    public function notifyCommercantePaymentReceived(LckOrder $order): void
+    {
+        $orderUrl  = config('app.url') . '/commercant/orders/' . $order->order_ref;
+        $message   = "✅ *Paiement reçu — La Clé des Châteaux*\n\n"
+            . "Référence : *{$order->order_ref}*\n"
+            . "Client : " . ($order->customer_name ?? 'Non renseigné') . "\n"
+            . "Montant payé : *" . number_format($order->amount_paid ?? $order->total, 2) . " $*\n\n"
+            . "💡 Vous pouvez maintenant préparer et livrer cette commande.\n"
+            . "👉 {$orderUrl}";
+
+        $commercantes = $this->resolveCommercantsForOrder($order);
+        foreach ($commercantes as $commercante) {
+            if ($commercante->phone) {
+                $this->whatsapp->sendMessage($commercante->phone, $message);
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Paiement en ligne confirmé → notifier le client
     // ─────────────────────────────────────────────────────────────
     public function notifyCustomerPaymentConfirmed(LckOrder $order): void

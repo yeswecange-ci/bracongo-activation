@@ -124,10 +124,22 @@ class LckOrder extends Model
 
     public static function generateRef(): string
     {
-        $year = date('Y');
-        $last = static::whereYear('created_at', $year)->max('id') ?? 0;
-        $seq  = str_pad($last + 1, 4, '0', STR_PAD_LEFT);
-        return "LCK-{$year}-{$seq}";
+        return \Illuminate\Support\Facades\DB::transaction(function () {
+            $year  = date('Y');
+            $count = static::whereYear('created_at', $year)
+                ->lockForUpdate()
+                ->count();
+            $seq   = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            $ref   = "LCK-{$year}-{$seq}";
+
+            // Sécurité : si la référence existe déjà, incrémenter jusqu'à trouver un libre
+            while (static::where('order_ref', $ref)->exists()) {
+                $seq  = str_pad((int) $seq + 1, 4, '0', STR_PAD_LEFT);
+                $ref  = "LCK-{$year}-{$seq}";
+            }
+
+            return $ref;
+        });
     }
 
     public function scopeActive($query)

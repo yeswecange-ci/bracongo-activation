@@ -73,6 +73,15 @@ class LckOrderController extends Controller
             default     => null,
         };
 
+        // Cash on delivery → paiement confirmé automatiquement à la livraison
+        if ($request->status === 'delivered'
+            && $order->payment_method === 'cash_on_delivery'
+            && $order->payment_status === 'pending') {
+            $updates['payment_status'] = 'paid';
+            $updates['amount_paid']    = $order->total;
+            $updates['paid_at']        = now();
+        }
+
         $order->update($updates);
 
         return redirect()->route('admin.lck.orders.show', $ref)
