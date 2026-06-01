@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Commercant;
 
 use App\Http\Controllers\Controller;
 use App\Models\LckOrder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -37,5 +38,17 @@ class DashboardController extends Controller
             ->get();
 
         return view('commercant.dashboard', compact('stats', 'myStats', 'recentOrders'));
+    }
+
+    public function goOnline(): JsonResponse
+    {
+        Auth::guard('commercant')->user()->goOnline();
+        return response()->json(['success' => true, 'since' => now()->diffForHumans()]);
+    }
+
+    public function goOffline(): JsonResponse
+    {
+        Auth::guard('commercant')->user()->goOffline();
+        return response()->json(['success' => true]);
     }
 }

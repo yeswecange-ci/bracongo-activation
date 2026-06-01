@@ -281,6 +281,10 @@ Route::prefix('commercant')->group(function () {
             ->name('commercant.orders.claim');
         Route::get('/pending-count', [\App\Http\Controllers\Commercant\OrderController::class, 'pendingCount'])
             ->name('commercant.pending-count');
+        Route::post('/go-online',  [\App\Http\Controllers\Commercant\DashboardController::class, 'goOnline'])
+            ->name('commercant.go-online');
+        Route::post('/go-offline', [\App\Http\Controllers\Commercant\DashboardController::class, 'goOffline'])
+            ->name('commercant.go-offline');
 
         // Catalogue (caviste seulement)
         Route::get('/products', [\App\Http\Controllers\Commercant\ProductController::class, 'index'])
