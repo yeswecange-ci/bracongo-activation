@@ -101,9 +101,12 @@ class LckOrderController extends Controller
     public function destroyAll()
     {
         $count = LckOrder::count();
+
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
         \App\Models\LckOrderItem::truncate();
-        \App\Models\LckCartSession::truncate();
         LckOrder::truncate();
+        \App\Models\LckCartSession::truncate();
+        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         \Illuminate\Support\Facades\Log::warning("LCK: toutes les commandes supprimées par l'admin ({$count} commandes).");
 
