@@ -3,31 +3,32 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class LckSetting extends Model
 {
-    protected $table      = 'lck_settings';
-    protected $primaryKey = 'key';
-    public    $incrementing = false;
-    protected $keyType    = 'string';
+    protected $table = 'lck_settings';
 
-    protected $fillable = ['key', 'value'];
+    // 'key' est un mot réservé MySQL — on bypasse l'ORM Eloquent
+    // et on utilise DB::table() pour éviter tout conflit de quoting.
 
-    // Récupère une valeur avec fallback
     public static function get(string $key, string $default = ''): string
     {
-        return static::where('key', $key)->value('value') ?? $default;
+        $row = DB::table('lck_settings')->where('key', $key)->first();
+        return $row->value ?? $default;
     }
 
-    // Met à jour ou crée une clé
     public static function set(string $key, ?string $value): void
     {
-        static::updateOrCreate(['key' => $key], ['value' => $value]);
+        DB::table('lck_settings')->updateOrInsert(
+            ['key' => $key],
+            ['value' => $value, 'updated_at' => now()]
+        );
     }
 
-    // Retourne toutes les settings sous forme de tableau associatif ['key' => 'value']
+    // Tableau associatif ['key' => 'value'] pour toutes les settings
     public static function asMap(): array
     {
-        return static::all()->pluck('value', 'key')->toArray();
+        return DB::table('lck_settings')->pluck('value', 'key')->toArray();
     }
 }
