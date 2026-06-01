@@ -102,6 +102,9 @@ Route::prefix('lck')->group(function () {
     Route::get('/order/{ref}/status-check', [LckController::class, 'checkOrderStatus'])->name('api.lck.order.status-check');
     Route::post('/order/{ref}/cancel-by-customer', [LckController::class, 'cancelByCustomer'])->name('api.lck.order.cancel-customer');
 
+    // Disponibilité commercant (envoyé par Twilio quand le vendeur tape ONLINE/OFFLINE)
+    Route::post('/commercant/checkin', [\App\Http\Controllers\Api\LckController::class, 'commercantCheckin'])->name('api.lck.commercant.checkin');
+
     // Paiement — initiation, webhook, vérification
     Route::post('/payment/initiate', [\App\Http\Controllers\Api\LckPaymentController::class, 'initiate'])->name('api.lck.payment.initiate');
     Route::post('/payment/callback', [\App\Http\Controllers\Api\LckPaymentController::class, 'callback'])->name('api.lck.payment.callback');

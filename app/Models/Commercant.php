@@ -13,25 +13,37 @@ class Commercant extends Authenticatable
     protected $table = 'commercants';
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-        'zones',
-        'role',
-        'is_active',
+        'name', 'email', 'password', 'phone',
+        'zones', 'role', 'is_active', 'is_online', 'last_online_at',
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
-        'password'  => 'hashed',
-        'is_active' => 'boolean',
-        'zones'     => 'array',
+        'password'       => 'hashed',
+        'is_active'      => 'boolean',
+        'is_online'      => 'boolean',
+        'zones'          => 'array',
+        'last_online_at' => 'datetime',
     ];
+
+    public function goOnline(): void
+    {
+        $this->update(['is_online' => true, 'last_online_at' => now()]);
+    }
+
+    public function goOffline(): void
+    {
+        $this->update(['is_online' => false]);
+    }
+
+    // Session WhatsApp active si le commercant est allé online dans les 23h
+    public function hasActiveWhatsAppSession(): bool
+    {
+        return $this->is_online
+            && $this->last_online_at
+            && $this->last_online_at->isAfter(now()->subHours(23));
+    }
 
     const ROLE_COMMERCIAL = 'commercial';
     const ROLE_CAVISTE    = 'caviste';

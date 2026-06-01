@@ -528,6 +528,54 @@ class LckController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    // POST /api/lck/commercant/checkin
+    // Appelé par Twilio quand le vendeur envoie ONLINE ou OFFLINE
+    // ─────────────────────────────────────────────────────────────
+    public function commercantCheckin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'phone'  => 'required|string',
+            'status' => 'required|in:online,offline',
+        ]);
+
+        // Normalise le numéro (retire whatsapp: et +)
+        $phone = preg_replace('/^whatsapp:\+?/i', '', $request->phone);
+        $phone = '+' . ltrim($phone, '+');
+
+        // Cherche le commercant par son numéro (correspondance flexible)
+        $commercant = \App\Models\Commercant::where('is_active', true)->get()
+            ->first(function ($c) use ($phone) {
+                if (!$c->phone) return false;
+                $a = preg_replace('/[^0-9]/', '', $c->phone);
+                $b = preg_replace('/[^0-9]/', '', $phone);
+                return $a === $b || str_ends_with($a, substr($b, -9)) || str_ends_with($b, substr($a, -9));
+            });
+
+        if (!$commercant) {
+            return response()->json([
+                'success'      => false,
+                'reply'        => "❌ Numéro non reconnu. Contactez l'administrateur pour enregistrer votre numéro WhatsApp.",
+            ], 404);
+        }
+
+        if ($request->status === 'online') {
+            $commercant->goOnline();
+            Log::info('LCK Commercant online', ['name' => $commercant->name, 'phone' => $phone]);
+            return response()->json([
+                'success' => true,
+                'reply'   => "✅ *{$commercant->name}*, vous êtes maintenant *en ligne* !\n\nVous recevrez les notifications de nouvelles commandes pendant les prochaines 24h. 🍷\n\n_Revenez demain matin pour vous reconnecter._",
+            ]);
+        }
+
+        $commercant->goOffline();
+        Log::info('LCK Commercant offline', ['name' => $commercant->name, 'phone' => $phone]);
+        return response()->json([
+            'success' => true,
+            'reply'   => "⏸️ *{$commercant->name}*, vous êtes maintenant *hors ligne*.\n\nVous ne recevrez plus de notifications jusqu'à votre prochaine connexion.",
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Upsert automatique d'un produit WooCommerce dans lck_products
     // Crée le produit s'il n'existe pas, met à jour nom/prix sinon.
     // Ne touche jamais à is_available / is_active (géré par l'équipe).

@@ -28,6 +28,16 @@ return Application::configure(basePath: dirname(__DIR__))
             ->everyFiveMinutes()
             ->withoutOverlapping()
             ->runInBackground();
+
+        // LCK — Reset offline toutes les nuits à minuit
+        $schedule->command('lck:daily-reset')
+            ->dailyAt('00:00')
+            ->withoutOverlapping();
+
+        // LCK — Rappel matin aux commercants à 7h30
+        $schedule->command('lck:morning-reminder')
+            ->dailyAt('07:30')
+            ->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

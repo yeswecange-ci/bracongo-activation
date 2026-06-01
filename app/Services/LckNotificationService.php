@@ -68,13 +68,17 @@ class LckNotificationService
     {
         $location = strtolower(trim($order->customer_location ?? ''));
 
-        $all = Commercant::where('is_active', true)->get();
+        // Priorité : commercants online (session WhatsApp active)
+        // Fallback : tous les commercants actifs si aucun n'est online
+        $pool = Commercant::where('is_active', true)->get();
+        $online = $pool->filter(fn($c) => $c->hasActiveWhatsAppSession());
+        $candidates = $online->isNotEmpty() ? $online : $pool;
 
         if (!$location) {
-            return $all;
+            return $candidates;
         }
 
-        $matched = $all->filter(function (Commercant $c) use ($location) {
+        $matched = $candidates->filter(function (Commercant $c) use ($location) {
             foreach ((array) ($c->zones ?? []) as $zone) {
                 $zone = strtolower(trim($zone));
                 if ($zone && (str_contains($location, $zone) || str_contains($zone, $location))) {
@@ -84,7 +88,20 @@ class LckNotificationService
             return false;
         });
 
-        return $matched->isNotEmpty() ? $matched : $all;
+        // Si aucun match dans les online → élargit à tous les actifs de la zone
+        if ($matched->isEmpty() && $online->isNotEmpty()) {
+            $matched = $pool->filter(function (Commercant $c) use ($location) {
+                foreach ((array) ($c->zones ?? []) as $zone) {
+                    $zone = strtolower(trim($zone));
+                    if ($zone && (str_contains($location, $zone) || str_contains($zone, $location))) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+
+        return $matched->isNotEmpty() ? $matched : $candidates;
     }
 
     // ─────────────────────────────────────────────────────────────
