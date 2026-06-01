@@ -98,6 +98,19 @@ class LckOrderController extends Controller
             ->with('success', "Commande {$ref} supprimée.");
     }
 
+    public function destroyAll()
+    {
+        $count = LckOrder::count();
+        \App\Models\LckOrderItem::truncate();
+        \App\Models\LckCartSession::truncate();
+        LckOrder::truncate();
+
+        \Illuminate\Support\Facades\Log::warning("LCK: toutes les commandes supprimées par l'admin ({$count} commandes).");
+
+        return redirect()->route('admin.lck.orders.index')
+            ->with('success', "{$count} commande(s) supprimée(s). Les données de test ont été effacées.");
+    }
+
     private function exportCsv(Request $request)
     {
         $query = LckOrder::with(['items', 'commercant'])->orderByDesc('created_at');

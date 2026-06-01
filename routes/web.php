@@ -200,6 +200,8 @@ Route::prefix('admin')->group(function () {
                 ->name('admin.lck.orders.status');
             Route::delete('orders/{ref}', [\App\Http\Controllers\Admin\LckOrderController::class, 'destroy'])
                 ->name('admin.lck.orders.destroy');
+            Route::delete('orders', [\App\Http\Controllers\Admin\LckOrderController::class, 'destroyAll'])
+                ->name('admin.lck.orders.destroy-all');
             Route::get('reports', [\App\Http\Controllers\Admin\LckReportController::class, 'index'])
                 ->name('admin.lck.reports');
             Route::get('settings', [\App\Http\Controllers\Admin\LckSettingsController::class, 'edit'])

@@ -23,9 +23,10 @@ class LckSettingsController extends Controller
             'pickup_phone'    => 'nullable|string|max:30',
             'pickup_hours'    => 'required|string|max:100',
             'pickup_deadline' => 'required|integer|min:1|max:30',
+            'website_url'     => 'nullable|url|max:200',
         ]);
 
-        $keys = ['pickup_name', 'pickup_address', 'pickup_city', 'pickup_phone', 'pickup_hours', 'pickup_deadline'];
+        $keys = ['pickup_name', 'pickup_address', 'pickup_city', 'pickup_phone', 'pickup_hours', 'pickup_deadline', 'website_url'];
 
         foreach ($keys as $key) {
             LckSetting::set($key, $request->input($key));

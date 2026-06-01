@@ -43,8 +43,25 @@
         </form>
     </div>
 
-    {{-- Stats --}}
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+    {{-- Vider les données de test --}}
+    <div class="mt-4 md:mt-0 flex items-center gap-2">
+        <form method="POST" action="{{ route('admin.lck.orders.destroy-all') }}"
+              onsubmit="return confirm('⚠️ Supprimer TOUTES les commandes ?\n\nCette action est irréversible. Utilisez uniquement pour effacer des données de test.') && confirm('Dernière confirmation : effacer toutes les commandes ?')">
+            @csrf
+            @method('DELETE')
+            <button type="submit"
+                    class="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Vider toutes les commandes
+            </button>
+        </form>
+    </div>
+</div>
+
+{{-- Stats --}}
+<div class="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500">
             <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Nouvelles</p>
             <p class="text-3xl font-bold text-gray-800">{{ $stats['received'] }}</p>

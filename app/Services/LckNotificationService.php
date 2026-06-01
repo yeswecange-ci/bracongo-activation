@@ -153,15 +153,19 @@ class LckNotificationService
     }
 
     // ─────────────────────────────────────────────────────────────
-    // En route → notifier le client avant livraison
+    // Commande livrée → message de remerciement au client
     // ─────────────────────────────────────────────────────────────
     public function notifyCustomerOrderOnTheWay(LckOrder $order): void
     {
-        $message = "🚗 *Votre commande est en route !*\n\n"
-            . "Référence: *{$order->order_ref}*\n\n"
-            . "Votre livreur est en chemin vers *{$order->customer_location}*.\n"
-            . "Restez disponible sur ce numéro. 📞\n\n"
-            . "_La Clé des Châteaux_";
+        $siteUrl = \App\Models\LckSetting::get('website_url', 'https://lacledeschateaux.ywcdigital.com');
+
+        $message = "✅ *Votre commande a été livrée avec succès !*\n\n"
+            . "Référence : *{$order->order_ref}*\n"
+            . "Total : *" . number_format($order->total, 2) . " \$*\n\n"
+            . "Merci pour votre confiance et votre commande. 🍷\n\n"
+            . "Nous espérons vous revoir très bientôt !\n"
+            . "👉 {$siteUrl}\n\n"
+            . "_La Clé des Châteaux — Kinshasa, RDC_";
 
         $this->whatsapp->sendMessage($order->customer_phone, $message);
     }

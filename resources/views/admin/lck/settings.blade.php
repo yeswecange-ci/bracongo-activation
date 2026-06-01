@@ -73,6 +73,16 @@
                 </div>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    URL du site web
+                    <span class="text-xs text-gray-400 font-normal ml-1">— inclus dans le message de confirmation de livraison</span>
+                </label>
+                <input type="url" name="website_url" value="{{ old('website_url', $settings['website_url'] ?? '') }}"
+                       placeholder="https://lacledeschateaux.ywcdigital.com"
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500">
+            </div>
+
             {{-- Aperçu du message WhatsApp --}}
             <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Aperçu du message WhatsApp</p>
