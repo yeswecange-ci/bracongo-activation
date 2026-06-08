@@ -24,7 +24,18 @@
       "Bash(ls:*)",
       "Bash(test:*)",
       "Bash(dir \"C:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\\\\resources\\\\views\\\\admin\\\\pronostics\" /b)",
-      "Bash(git -C \"C:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\" log --oneline -20)"
+      "Bash(git -C \"C:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\" log --oneline -20)",
+      "Bash(Get-ChildItem -Path \"c:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Start-Process php *)",
+      "Bash(Out-Null)",
+      "Bash(Start-Sleep -Seconds 3)",
+      "Bash(python3 -m json.tool)",
+      "Bash(echo \"=== TEST 5C: Vérification contenu CSV ===\" && \\\\ *)",
+      "Read(//tmp/**)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:8765/admin/login\" -UseBasicParsing -MaximumRedirection 0 -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Sleep -Seconds 4; try { $r = Invoke-WebRequest -Uri \"http://localhost:8765/admin/login\" -UseBasicParsing -TimeoutSec 5; \"Status: $\\($r.StatusCode\\)\" } catch { $_.Exception.Message })",
+      "Bash(Copy-Item \"c:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\\\\laclesdeschateaux.jpeg\" \"c:\\\\wamp64\\\\www\\\\YESWECANGE\\\\bracongo-activation\\\\public\\\\images\\\\lck-logo.jpeg\")"
     ],
     "deny": [],
     "ask": []

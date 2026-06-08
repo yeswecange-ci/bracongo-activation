@@ -585,7 +585,7 @@ class TwilioStudioController extends Controller
             ]);
         }
 
-        $message = "⚽ *PROCHAINS MATCHS CAN 2025*\n\n";
+        $message = "⚽ *COUPE DU MONDE 2026*\n\n";
 
         foreach ($matches as $index => $match) {
             $number = $index + 1;
