@@ -1,0 +1,1104 @@
+{
+  "description": "CAN 2025 - Pronostics + Inscription auto (vérifie si le joueur existe, l'inscrit sinon, puis pronostic) - clé API",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "next": "set_phone",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "next": "set_phone",
+          "event": "incomingConversationMessage"
+        },
+        {
+          "event": "incomingRequest"
+        },
+        {
+          "next": "set_phone",
+          "event": "incomingParent"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "set_phone",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_user",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{trigger.message.From}}",
+            "key": "phone_number"
+          },
+          {
+            "type": "string",
+            "value": "REMPLACE_PAR_CAN_API_KEY",
+            "key": "api_key"
+          }
+        ],
+        "offset": {
+          "x": 350,
+          "y": 200
+        }
+      }
+    },
+    {
+      "name": "http_check_user",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "route_user",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_api",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 350,
+          "y": 400
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"api_key\":\"{{flow.variables.api_key}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/check-user"
+      }
+    },
+    {
+      "name": "route_user",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_ask_name",
+          "event": "noMatch"
+        },
+        {
+          "next": "http_get_matchs",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Déjà inscrit",
+              "arguments": [
+                "{{widgets.http_check_user.parsed.status}}"
+              ],
+              "type": "equal_to",
+              "value": "INSCRIT"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_check_user.parsed.status}}",
+        "offset": {
+          "x": 350,
+          "y": 600
+        }
+      }
+    },
+    {
+      "name": "msg_ask_name",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "set_name",
+          "event": "incomingMessage"
+        },
+        {
+          "next": "msg_timeout",
+          "event": "timeout"
+        },
+        {
+          "next": "end_success",
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 800,
+          "y": 800
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "👋 *Bienvenue dans le jeu de pronostics CAN 2025 !*\n\nAvant de jouer, dis-moi simplement ton *prénom* 👇",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "set_name",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_inscription",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.msg_ask_name.inbound.Body}}",
+            "key": "user_name"
+          }
+        ],
+        "offset": {
+          "x": 800,
+          "y": 1000
+        }
+      }
+    },
+    {
+      "name": "http_inscription",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_inscription_success",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_api",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 800,
+          "y": 1200
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"name\":\"{{flow.variables.user_name}}\",\"source_type\":\"DIRECT\",\"source_detail\":\"WHATSAPP\",\"api_key\":\"{{flow.variables.api_key}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/inscription"
+      }
+    },
+    {
+      "name": "check_inscription_success",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_erreur_api",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_welcome",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Inscription OK",
+              "arguments": [
+                "{{widgets.http_inscription.parsed.success}}"
+              ],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_inscription.parsed.success}}",
+        "offset": {
+          "x": 800,
+          "y": 1400
+        }
+      }
+    },
+    {
+      "name": "msg_welcome",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "http_get_matchs",
+          "event": "sent"
+        },
+        {
+          "next": "http_get_matchs",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 800,
+          "y": 1600
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "✅ *Inscription réussie, {{widgets.http_inscription.parsed.name}} !* 🎉\n\nTu peux maintenant placer ton pronostic 👇"
+      }
+    },
+    {
+      "name": "http_get_matchs",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_has_matchs",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_api",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -130,
+          "y": 1600
+        },
+        "method": "GET",
+        "content_type": "application/x-www-form-urlencoded",
+        "add_twilio_auth": false,
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/matches/formatted?limit=5&api_key={{flow.variables.api_key}}"
+      }
+    },
+    {
+      "name": "check_has_matchs",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_aucun_match_disponible",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_liste_matchs",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Des matchs disponibles",
+              "arguments": [
+                "{{widgets.http_get_matchs.parsed.has_matches}}"
+              ],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_get_matchs.parsed.has_matches}}",
+        "offset": {
+          "x": 200,
+          "y": 1820
+        }
+      }
+    },
+    {
+      "name": "msg_aucun_match_disponible",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 1000,
+          "y": 1870
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ *AUCUN MATCH DISPONIBLE*\n\nIl n'y a aucun match ouvert pour les pronostics en ce moment.\n\n📅 Les pronostics seront disponibles dès qu'un nouveau match sera programmé.\n\n🍀 À bientôt pour les prochains matchs !"
+      }
+    },
+    {
+      "name": "msg_erreur_api",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 1400,
+          "y": 600
+        },
+        "from": "{{flow.channel.address}}",
+        "message_type": "custom",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ Une erreur est survenue. Réessaie dans quelques instants."
+      }
+    },
+    {
+      "name": "msg_liste_matchs",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "check_choix_match",
+          "event": "incomingMessage"
+        },
+        {
+          "next": "msg_timeout",
+          "event": "timeout"
+        },
+        {
+          "next": "end_success",
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -220,
+          "y": 2040
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "{{widgets.http_get_matchs.parsed.message}}",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "msg_timeout",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -600,
+          "y": 2250
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "⏱️ Temps écoulé ! Renvoie un message pour recommencer ton pronostic."
+      }
+    },
+    {
+      "name": "check_choix_match",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_choix_invalide",
+          "event": "noMatch"
+        },
+        {
+          "next": "set_match_1",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Match 1",
+              "arguments": [
+                "{{widgets.msg_liste_matchs.inbound.Body}}"
+              ],
+              "type": "matches_any_of",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "next": "set_match_2",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Match 2",
+              "arguments": [
+                "{{widgets.msg_liste_matchs.inbound.Body}}"
+              ],
+              "type": "matches_any_of",
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "next": "set_match_3",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Match 3",
+              "arguments": [
+                "{{widgets.msg_liste_matchs.inbound.Body}}"
+              ],
+              "type": "matches_any_of",
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "next": "set_match_4",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Match 4",
+              "arguments": [
+                "{{widgets.msg_liste_matchs.inbound.Body}}"
+              ],
+              "type": "matches_any_of",
+              "value": "4"
+            }
+          ]
+        },
+        {
+          "next": "set_match_5",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Match 5",
+              "arguments": [
+                "{{widgets.msg_liste_matchs.inbound.Body}}"
+              ],
+              "type": "matches_any_of",
+              "value": "5"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.msg_liste_matchs.inbound.Body}}",
+        "offset": {
+          "x": 0,
+          "y": 2250
+        }
+      }
+    },
+    {
+      "name": "set_match_1",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_existing_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[0].id}}",
+            "key": "selected_match_id"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[0].team_a}}",
+            "key": "selected_team_a"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[0].team_b}}",
+            "key": "selected_team_b"
+          }
+        ],
+        "offset": {
+          "x": -800,
+          "y": 2500
+        }
+      }
+    },
+    {
+      "name": "set_match_2",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_existing_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[1].id}}",
+            "key": "selected_match_id"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[1].team_a}}",
+            "key": "selected_team_a"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[1].team_b}}",
+            "key": "selected_team_b"
+          }
+        ],
+        "offset": {
+          "x": -400,
+          "y": 2500
+        }
+      }
+    },
+    {
+      "name": "set_match_3",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_existing_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[2].id}}",
+            "key": "selected_match_id"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[2].team_a}}",
+            "key": "selected_team_a"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[2].team_b}}",
+            "key": "selected_team_b"
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 2500
+        }
+      }
+    },
+    {
+      "name": "set_match_4",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_existing_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[3].id}}",
+            "key": "selected_match_id"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[3].team_a}}",
+            "key": "selected_team_a"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[3].team_b}}",
+            "key": "selected_team_b"
+          }
+        ],
+        "offset": {
+          "x": 400,
+          "y": 2500
+        }
+      }
+    },
+    {
+      "name": "set_match_5",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_check_existing_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[4].id}}",
+            "key": "selected_match_id"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[4].team_a}}",
+            "key": "selected_team_a"
+          },
+          {
+            "type": "string",
+            "value": "{{widgets.http_get_matchs.parsed.matches[4].team_b}}",
+            "key": "selected_team_b"
+          }
+        ],
+        "offset": {
+          "x": 800,
+          "y": 2500
+        }
+      }
+    },
+    {
+      "name": "msg_choix_invalide",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 1200,
+          "y": 2500
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ Choix invalide ! Renvoie un message et choisis le numéro d'un match de la liste."
+      }
+    },
+    {
+      "name": "http_check_existing_prono",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_has_existing_prono",
+          "event": "success"
+        },
+        {
+          "next": "msg_options_prono",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 2750
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"match_id\":{{flow.variables.selected_match_id}},\"api_key\":\"{{flow.variables.api_key}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/check-pronostic"
+      }
+    },
+    {
+      "name": "check_has_existing_prono",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_options_prono",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_prono_deja_existe",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Pronostic existe",
+              "arguments": [
+                "{{widgets.http_check_existing_prono.parsed.has_pronostic}}"
+              ],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_check_existing_prono.parsed.has_pronostic}}",
+        "offset": {
+          "x": 0,
+          "y": 2950
+        }
+      }
+    },
+    {
+      "name": "msg_prono_deja_existe",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 500,
+          "y": 3150
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "🚫 *PRONOSTIC DÉJÀ ENREGISTRÉ*\n\n⚽ {{flow.variables.selected_team_a}} vs {{flow.variables.selected_team_b}}\n\n📊 Ton pronostic actuel :\n{{widgets.http_check_existing_prono.parsed.pronostic_details}}\n\n📅 Placé le : {{widgets.http_check_existing_prono.parsed.created_at}}\n\n❌ *Impossible de modifier ton pronostic.*\n\n🍀 À bientôt pour les prochains matchs !"
+      }
+    },
+    {
+      "name": "msg_options_prono",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "check_choix_prono",
+          "event": "incomingMessage"
+        },
+        {
+          "next": "msg_timeout_prono",
+          "event": "timeout"
+        },
+        {
+          "next": "end_success",
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -400,
+          "y": 3150
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "🏆 TON PRONOSTIC DU MATCH ⚽\n🔥 {{flow.variables.selected_team_a}} vs {{flow.variables.selected_team_b}} 🔥\n\n👉 Qui va gagner selon toi ?\n\n1️⃣ Victoire {{flow.variables.selected_team_a}}\n2️⃣ Victoire {{flow.variables.selected_team_b}}\n3️⃣ 🤝 Match nul\n\n📩 Réponds simplement par 1, 2 ou 3 pour valider !",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "msg_timeout_prono",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -800,
+          "y": 3400
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "⏱️ Temps écoulé ! Renvoie un message pour faire ton pronostic."
+      }
+    },
+    {
+      "name": "check_choix_prono",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_prono_invalide",
+          "event": "noMatch"
+        },
+        {
+          "next": "set_prono_team_a",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Victoire équipe A",
+              "arguments": [
+                "{{widgets.msg_options_prono.inbound.Body}}"
+              ],
+              "type": "equal_to",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "next": "set_prono_team_b",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Victoire équipe B",
+              "arguments": [
+                "{{widgets.msg_options_prono.inbound.Body}}"
+              ],
+              "type": "equal_to",
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "next": "set_prono_draw",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Match nul",
+              "arguments": [
+                "{{widgets.msg_options_prono.inbound.Body}}"
+              ],
+              "type": "equal_to",
+              "value": "3"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.msg_options_prono.inbound.Body}}",
+        "offset": {
+          "x": 0,
+          "y": 3400
+        }
+      }
+    },
+    {
+      "name": "set_prono_team_a",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_save_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "team_a_win",
+            "key": "prediction_type"
+          }
+        ],
+        "offset": {
+          "x": -400,
+          "y": 3650
+        }
+      }
+    },
+    {
+      "name": "set_prono_team_b",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_save_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "team_b_win",
+            "key": "prediction_type"
+          }
+        ],
+        "offset": {
+          "x": 0,
+          "y": 3650
+        }
+      }
+    },
+    {
+      "name": "set_prono_draw",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_save_prono",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "draw",
+            "key": "prediction_type"
+          }
+        ],
+        "offset": {
+          "x": 400,
+          "y": 3650
+        }
+      }
+    },
+    {
+      "name": "msg_prono_invalide",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 800,
+          "y": 3650
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ Choix invalide ! Réponds par 1, 2 ou 3."
+      }
+    },
+    {
+      "name": "http_save_prono",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "check_prono_success",
+          "event": "success"
+        },
+        {
+          "next": "msg_erreur_prono",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 3900
+        },
+        "method": "POST",
+        "content_type": "application/json",
+        "add_twilio_auth": false,
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"match_id\":{{flow.variables.selected_match_id}},\"prediction_type\":\"{{flow.variables.prediction_type}}\",\"api_key\":\"{{flow.variables.api_key}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/pronostic"
+      }
+    },
+    {
+      "name": "check_prono_success",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_erreur_prono",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_confirmation_prono",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "API Success",
+              "arguments": [
+                "{{widgets.http_save_prono.parsed.success}}"
+              ],
+              "type": "equal_to",
+              "value": "true"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_save_prono.parsed.success}}",
+        "offset": {
+          "x": 0,
+          "y": 4150
+        }
+      }
+    },
+    {
+      "name": "msg_confirmation_prono",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "msg_remerciement",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 4400
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "{{widgets.http_save_prono.parsed.message}}"
+      }
+    },
+    {
+      "name": "msg_erreur_prono",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 400,
+          "y": 4150
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "❌ Erreur : {{widgets.http_save_prono.parsed.message}}"
+      }
+    },
+    {
+      "name": "msg_remerciement",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -200,
+          "y": 4650
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Merci pour ta participation 🙌\n\n📢 Nous te tiendrons informé(e) du résultat du match très bientôt.\n\n🍀 Bonne chance !"
+      }
+    },
+    {
+      "name": "end_success",
+      "type": "set-variables",
+      "transitions": [],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "PRONOSTIC_COMPLETE",
+            "key": "flow_status"
+          }
+        ],
+        "offset": {
+          "x": 220,
+          "y": 4900
+        }
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}

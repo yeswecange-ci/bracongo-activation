@@ -88,8 +88,12 @@ class Pronostic extends Model
         if ($actualResult === $predictedResult) {
             $this->is_winner = true;
 
-            // Score exact ? Bonus !
-            if ($this->predicted_score_a == $actualScoreA &&
+            // Bonus "score exact" UNIQUEMENT pour les pronostics de type score.
+            // Les pronostics simples (team_a_win/team_b_win/draw) stockent des
+            // scores artificiels (1-0 / 0-1 / 0-0) : ils ne doivent JAMAIS
+            // décrocher le bonus exact par coïncidence (ex: vrai score 1-0).
+            if ($this->prediction_type === null &&
+                $this->predicted_score_a == $actualScoreA &&
                 $this->predicted_score_b == $actualScoreB) {
                 $this->points_won = self::POINTS_EXACT_SCORE;
             } else {
@@ -139,6 +143,11 @@ class Pronostic extends Model
             return false;
         }
 
+        // Un pronostic simple ne peut pas être un "score exact"
+        if ($this->prediction_type !== null) {
+            return false;
+        }
+
         return $this->predicted_score_a === $this->match->score_a
             && $this->predicted_score_b === $this->match->score_b;
     }
@@ -176,52 +185,17 @@ class Pronostic extends Model
     }
 
     /**
-     * Créer ou mettre à jour un pronostic avec des scores
+     * Convertir un type de prédiction simple en scores artificiels.
+     * Utilisé à la création pour faciliter l'évaluation ultérieure.
      */
-    public static function createOrUpdate(User $user, FootballMatch $match, int $scoreA, int $scoreB): self
+    public static function scoresForType(string $predictionType): array
     {
-        return self::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'match_id' => $match->id,
-            ],
-            [
-                'predicted_score_a' => $scoreA,
-                'predicted_score_b' => $scoreB,
-                'prediction_type' => null, // Reset le type si on utilise des scores
-            ]
-        );
-    }
-
-    /**
-     * ✅ AMÉLIORÉE : Créer ou mettre à jour un pronostic avec un type simple
-     * Maintenant stocke aussi les scores correspondants pour l'évaluation
-     */
-    public static function createOrUpdateSimple(User $user, FootballMatch $match, string $predictionType): self
-    {
-        // Valider le type de prédiction
-        if (!in_array($predictionType, [self::PREDICTION_TEAM_A_WIN, self::PREDICTION_TEAM_B_WIN, self::PREDICTION_DRAW])) {
-            throw new \InvalidArgumentException("Type de prédiction invalide: {$predictionType}");
-        }
-
-        // Convertir le type en scores pour faciliter l'évaluation
-        [$scoreA, $scoreB] = match ($predictionType) {
+        return match ($predictionType) {
             self::PREDICTION_TEAM_A_WIN => [1, 0],
             self::PREDICTION_TEAM_B_WIN => [0, 1],
-            self::PREDICTION_DRAW => [0, 0],
+            self::PREDICTION_DRAW       => [0, 0],
+            default => throw new \InvalidArgumentException("Type de prédiction invalide: {$predictionType}"),
         };
-
-        return self::updateOrCreate(
-            [
-                'user_id' => $user->id,
-                'match_id' => $match->id,
-            ],
-            [
-                'prediction_type' => $predictionType,
-                'predicted_score_a' => $scoreA,
-                'predicted_score_b' => $scoreB,
-            ]
-        );
     }
 
     /**

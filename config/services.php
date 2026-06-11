@@ -49,6 +49,10 @@ return [
         'online_driver' => env('PAYMENT_ONLINE_DRIVER', 'cinetpay'),
     ],
 
+    // Clé partagée protégeant les endpoints /api/can/* appelés par Twilio Studio.
+    // Laisser vide tant que la clé n'est pas posée dans le flow Twilio (fail-open).
+    'can_api_key' => env('CAN_API_KEY', ''),
+
     'cinetpay' => [
         'api_key'    => env('CINETPAY_API_KEY', ''),
         'site_id'    => env('CINETPAY_SITE_ID', ''),

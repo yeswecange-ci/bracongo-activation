@@ -96,13 +96,18 @@ class TwilioStudioController extends Controller
         $validated = $request->validate([
             'phone'         => 'required|string',
             'name'          => 'required|string|min:2',
-            'source_type'   => 'required|string',
-            'source_detail' => 'required|string',
+            'source_type'   => 'nullable|string',
+            'source_detail' => 'nullable|string',
             'status'        => 'nullable|string',
             'timestamp'     => 'nullable|string',
         ]);
 
         $phone = $this->formatPhone($validated['phone']);
+
+        // L'inscription peut venir du flow QR (avec source) ou directement du bot
+        // pronostic (téléphone + nom uniquement). On applique des valeurs par défaut.
+        $sourceType   = $validated['source_type']   ?? 'DIRECT';
+        $sourceDetail = $validated['source_detail'] ?? 'WHATSAPP';
 
         // Vérifier si l'utilisateur existe déjà
         $user = User::where('phone', $phone)->first();
@@ -111,8 +116,8 @@ class TwilioStudioController extends Controller
             // Utilisateur déjà inscrit - mise à jour
             $user->update([
                 'name'                => ucwords(strtolower($validated['name'])),
-                'source_type'         => $validated['source_type'],
-                'source_detail'       => $validated['source_detail'],
+                'source_type'         => $sourceType,
+                'source_detail'       => $sourceDetail,
                 'registration_status' => 'INSCRIT',
                 'opted_in_at'         => now(),
                 'is_active'           => true,
@@ -124,12 +129,19 @@ class TwilioStudioController extends Controller
             ]);
         } else {
             // Nouvel utilisateur - extraire le village depuis la source
-            $villageId = $this->extractVillageFromSource($validated['source_type'], $validated['source_detail']);
+            $villageId = $this->extractVillageFromSource($sourceType, $sourceDetail);
 
             if (! $villageId) {
                 // Si pas de village trouvé, utiliser le premier village actif
                 $defaultVillage = Village::where('is_active', true)->first();
                 $villageId      = $defaultVillage ? $defaultVillage->id : null;
+
+                Log::warning('Twilio Studio - Village par défaut utilisé (source non reconnue)', [
+                    'phone'         => $phone,
+                    'source_type'   => $sourceType,
+                    'source_detail' => $sourceDetail,
+                    'village_id'    => $villageId,
+                ]);
             }
 
             if (! $villageId) {
@@ -143,8 +155,8 @@ class TwilioStudioController extends Controller
                 'name'                => ucwords(strtolower($validated['name'])),
                 'phone'               => $phone,
                 'village_id'          => $villageId,
-                'source_type'         => $validated['source_type'],
-                'source_detail'       => $validated['source_detail'],
+                'source_type'         => $sourceType,
+                'source_detail'       => $sourceDetail,
                 'scan_timestamp'      => $validated['timestamp'] ?? now(),
                 'registration_status' => 'INSCRIT',
                 'opted_in_at'         => now(),
@@ -923,19 +935,28 @@ class TwilioStudioController extends Controller
         // Mode 1 : Type de prédiction simple (recommandé pour WhatsApp)
         if (isset($validated['prediction_type'])) {
             // Convertir prediction_type en scores
-            [$scoreA, $scoreB] = match ($validated['prediction_type']) {
-                'team_a_win' => [1, 0],
-                'team_b_win' => [0, 1],
-                'draw'       => [0, 0],
-            };
+            [$scoreA, $scoreB] = Pronostic::scoresForType($validated['prediction_type']);
 
-            $pronostic = Pronostic::create([
-                'user_id'            => $user->id,
-                'match_id'           => $match->id,
-                'predicted_score_a'  => $scoreA,
-                'predicted_score_b'  => $scoreB,
-                'prediction_type'    => $validated['prediction_type'],
-            ]);
+            try {
+                $pronostic = Pronostic::create([
+                    'user_id'            => $user->id,
+                    'match_id'           => $match->id,
+                    'predicted_score_a'  => $scoreA,
+                    'predicted_score_b'  => $scoreB,
+                    'prediction_type'    => $validated['prediction_type'],
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Race condition : un pronostic a été créé entre la vérification et l'insertion
+                Log::warning('Pronostic duplicate caught at insert (simple)', [
+                    'user_id'  => $user->id,
+                    'match_id' => $match->id,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "🚫 Tu as déjà un pronostic pour ce match !\n\n❌ Impossible de le modifier.",
+                ], 400);
+            }
 
             $predictionText = match($validated['prediction_type']) {
                 'team_a_win' => "Victoire {$match->team_a}",
@@ -969,12 +990,24 @@ class TwilioStudioController extends Controller
 
         // Mode 2 : Scores (mode classique)
         if (isset($validated['score_a']) && isset($validated['score_b'])) {
-            $pronostic = Pronostic::create([
-                'user_id'           => $user->id,
-                'match_id'          => $match->id,
-                'predicted_score_a' => $validated['score_a'],
-                'predicted_score_b' => $validated['score_b'],
-            ]);
+            try {
+                $pronostic = Pronostic::create([
+                    'user_id'           => $user->id,
+                    'match_id'          => $match->id,
+                    'predicted_score_a' => $validated['score_a'],
+                    'predicted_score_b' => $validated['score_b'],
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                Log::warning('Pronostic duplicate caught at insert (scores)', [
+                    'user_id'  => $user->id,
+                    'match_id' => $match->id,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "🚫 Tu as déjà un pronostic pour ce match !\n\n❌ Impossible de le modifier.",
+                ], 400);
+            }
 
             Log::info('Twilio Studio - Pronostic saved (scores)', [
                 'user_id'    => $user->id,

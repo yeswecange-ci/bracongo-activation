@@ -28,7 +28,8 @@ Route::post('/webhook/twilio/incoming', [TwilioWebhookController::class, 'incomi
     ->name('api.twilio.incoming');
 
 // Endpoints pour Twilio Studio Flow CAN 2025
-Route::prefix('can')->group(function () {
+// Protégés par une clé partagée (middleware api.key, fail-open tant que CAN_API_KEY est vide)
+Route::prefix('can')->middleware('api.key')->group(function () {
     // Tracking & Inscription
     Route::post('/scan', [TwilioStudioController::class, 'scan'])->name('api.can.scan');
     Route::post('/optin', [TwilioStudioController::class, 'optin'])->name('api.can.optin');

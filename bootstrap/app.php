@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin'      => \App\Http\Middleware\AdminMiddleware::class,
             'commercant' => \App\Http\Middleware\CommerçantMiddleware::class,
             'force.json' => \App\Http\Middleware\ForceJsonResponse::class,
+            'api.key'    => \App\Http\Middleware\VerifyApiKey::class,
         ]);
 
         // Faire confiance aux proxies (Coolify, Nginx, etc.) pour HTTPS
