@@ -771,14 +771,32 @@ class TwilioStudioController extends Controller
             ->get();
 
         // Identifier les matchs sans pronostic
+        // ->values() est INDISPENSABLE : filter() conserve les clés d'origine,
+        // ce qui décalerait la numérotation et les index du tableau remaining_matches.
         $matchesWithPronostic = $userPronostics->pluck('match_id')->toArray();
         $matchesWithoutPronostic = $availableMatches->filter(function ($match) use ($matchesWithPronostic) {
             return !in_array($match->id, $matchesWithPronostic);
-        });
+        })->values();
 
         // Déterminer le statut
         $hasAllPronostics = $matchesWithoutPronostic->isEmpty() && $availableMatches->isNotEmpty();
         $hasPronostics = $userPronostics->isNotEmpty();
+
+        // Décision pour le bot Twilio : une seule valeur à tester côté flow.
+        // - NO_MATCH  : aucun match ouvert
+        // - ALL_DONE  : des matchs existent mais l'utilisateur a déjà tout parié
+        // - SINGLE    : exactement 1 match restant -> on saute la sélection
+        // - MULTIPLE  : plusieurs matchs restants -> on affiche la liste
+        $remainingCount = $matchesWithoutPronostic->count();
+        if ($availableMatches->isEmpty()) {
+            $nextAction = 'NO_MATCH';
+        } elseif ($remainingCount === 0) {
+            $nextAction = 'ALL_DONE';
+        } elseif ($remainingCount === 1) {
+            $nextAction = 'SINGLE';
+        } else {
+            $nextAction = 'MULTIPLE';
+        }
 
         // Construire le message d'historique
         $historiqueMessage = "";
@@ -819,6 +837,7 @@ class TwilioStudioController extends Controller
 
         Log::info('User pronostics retrieved', [
             'user_id' => $user->id,
+            'next_action' => $nextAction,
             'has_all_pronostics' => $hasAllPronostics,
             'total_available' => $availableMatches->count(),
             'total_user_pronostics' => $userPronostics->count(),
@@ -831,6 +850,7 @@ class TwilioStudioController extends Controller
                 'name' => $user->name,
                 'phone' => $user->phone,
             ],
+            'next_action' => $nextAction,
             'has_all_pronostics' => $hasAllPronostics,
             'has_pronostics' => $hasPronostics,
             'total_available_matches' => $availableMatches->count(),

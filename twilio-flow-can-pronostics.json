@@ -1,5 +1,5 @@
 {
-  "description": "CAN 2025 - Pronostics + Inscription auto (vérifie si le joueur existe, l'inscrit sinon, puis pronostic) - clé API",
+  "description": "CAN 2025 - Pronostics + Inscription auto. Historique au retour, saut de sélection si 1 seul match, clé API.",
   "states": [
     {
       "name": "Trigger",
@@ -55,7 +55,7 @@
         ],
         "offset": {
           "x": 350,
-          "y": 200
+          "y": 180
         }
       }
     },
@@ -75,7 +75,7 @@
       "properties": {
         "offset": {
           "x": 350,
-          "y": 400
+          "y": 360
         },
         "method": "POST",
         "content_type": "application/json",
@@ -93,7 +93,7 @@
           "event": "noMatch"
         },
         {
-          "next": "http_get_matchs",
+          "next": "http_user_pronos",
           "event": "match",
           "conditions": [
             {
@@ -111,7 +111,7 @@
         "input": "{{widgets.http_check_user.parsed.status}}",
         "offset": {
           "x": 350,
-          "y": 600
+          "y": 540
         }
       }
     },
@@ -135,7 +135,7 @@
       "properties": {
         "offset": {
           "x": 800,
-          "y": 800
+          "y": 740
         },
         "from": "{{flow.channel.address}}",
         "body": "👋 *Bienvenue dans le jeu de pronostics CAN 2025 !*\n\nAvant de jouer, dis-moi simplement ton *prénom* 👇",
@@ -161,7 +161,7 @@
         ],
         "offset": {
           "x": 800,
-          "y": 1000
+          "y": 940
         }
       }
     },
@@ -181,7 +181,7 @@
       "properties": {
         "offset": {
           "x": 800,
-          "y": 1200
+          "y": 1120
         },
         "method": "POST",
         "content_type": "application/json",
@@ -217,7 +217,7 @@
         "input": "{{widgets.http_inscription.parsed.success}}",
         "offset": {
           "x": 800,
-          "y": 1400
+          "y": 1300
         }
       }
     },
@@ -226,30 +226,30 @@
       "type": "send-message",
       "transitions": [
         {
-          "next": "http_get_matchs",
+          "next": "http_user_pronos",
           "event": "sent"
         },
         {
-          "next": "http_get_matchs",
+          "next": "http_user_pronos",
           "event": "failed"
         }
       ],
       "properties": {
         "offset": {
           "x": 800,
-          "y": 1600
+          "y": 1480
         },
         "from": "{{flow.channel.address}}",
         "to": "{{contact.channel.address}}",
-        "body": "✅ *Inscription réussie, {{widgets.http_inscription.parsed.name}} !* 🎉\n\nTu peux maintenant placer ton pronostic 👇"
+        "body": "✅ *Inscription réussie, {{widgets.http_inscription.parsed.name}} !* 🎉\n\nC'est parti pour ton pronostic 👇"
       }
     },
     {
-      "name": "http_get_matchs",
+      "name": "http_user_pronos",
       "type": "make-http-request",
       "transitions": [
         {
-          "next": "check_has_matchs",
+          "next": "split_show_historique",
           "event": "success"
         },
         {
@@ -259,31 +259,32 @@
       ],
       "properties": {
         "offset": {
-          "x": -130,
-          "y": 1600
+          "x": 350,
+          "y": 1680
         },
-        "method": "GET",
-        "content_type": "application/x-www-form-urlencoded",
+        "method": "POST",
+        "content_type": "application/json",
         "add_twilio_auth": false,
-        "url": "https://can-wabracongo.ywcdigital.com/api/can/matches/formatted?limit=5&api_key={{flow.variables.api_key}}"
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"api_key\":\"{{flow.variables.api_key}}\"}",
+        "url": "https://can-wabracongo.ywcdigital.com/api/can/user-pronostics"
       }
     },
     {
-      "name": "check_has_matchs",
+      "name": "split_show_historique",
       "type": "split-based-on",
       "transitions": [
         {
-          "next": "msg_aucun_match_disponible",
+          "next": "split_action",
           "event": "noMatch"
         },
         {
-          "next": "msg_liste_matchs",
+          "next": "msg_historique",
           "event": "match",
           "conditions": [
             {
-              "friendly_name": "Des matchs disponibles",
+              "friendly_name": "A des pronostics",
               "arguments": [
-                "{{widgets.http_get_matchs.parsed.has_matches}}"
+                "{{widgets.http_user_pronos.parsed.has_pronostics}}"
               ],
               "type": "equal_to",
               "value": "true"
@@ -292,10 +293,106 @@
         }
       ],
       "properties": {
-        "input": "{{widgets.http_get_matchs.parsed.has_matches}}",
+        "input": "{{widgets.http_user_pronos.parsed.has_pronostics}}",
         "offset": {
-          "x": 200,
-          "y": 1820
+          "x": 350,
+          "y": 1860
+        }
+      }
+    },
+    {
+      "name": "msg_historique",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "split_action",
+          "event": "sent"
+        },
+        {
+          "next": "split_action",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -100,
+          "y": 2060
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "{{widgets.http_user_pronos.parsed.historique_message}}"
+      }
+    },
+    {
+      "name": "split_action",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "msg_erreur_api",
+          "event": "noMatch"
+        },
+        {
+          "next": "msg_aucun_match_disponible",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Aucun match",
+              "arguments": [
+                "{{widgets.http_user_pronos.parsed.next_action}}"
+              ],
+              "type": "equal_to",
+              "value": "NO_MATCH"
+            }
+          ]
+        },
+        {
+          "next": "msg_all_done",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Tout parié",
+              "arguments": [
+                "{{widgets.http_user_pronos.parsed.next_action}}"
+              ],
+              "type": "equal_to",
+              "value": "ALL_DONE"
+            }
+          ]
+        },
+        {
+          "next": "set_match_1",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Un seul match",
+              "arguments": [
+                "{{widgets.http_user_pronos.parsed.next_action}}"
+              ],
+              "type": "equal_to",
+              "value": "SINGLE"
+            }
+          ]
+        },
+        {
+          "next": "msg_liste_matchs",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "Plusieurs matchs",
+              "arguments": [
+                "{{widgets.http_user_pronos.parsed.next_action}}"
+              ],
+              "type": "equal_to",
+              "value": "MULTIPLE"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{widgets.http_user_pronos.parsed.next_action}}",
+        "offset": {
+          "x": 350,
+          "y": 2260
         }
       }
     },
@@ -314,12 +411,35 @@
       ],
       "properties": {
         "offset": {
-          "x": 1000,
-          "y": 1870
+          "x": 1100,
+          "y": 2460
         },
         "from": "{{flow.channel.address}}",
         "to": "{{contact.channel.address}}",
-        "body": "❌ *AUCUN MATCH DISPONIBLE*\n\nIl n'y a aucun match ouvert pour les pronostics en ce moment.\n\n📅 Les pronostics seront disponibles dès qu'un nouveau match sera programmé.\n\n🍀 À bientôt pour les prochains matchs !"
+        "body": "❌ *AUCUN MATCH DISPONIBLE*\n\nIl n'y a aucun match ouvert pour les pronostics en ce moment.\n\n📅 Reviens dès qu'un nouveau match sera programmé.\n\n🍀 À bientôt !"
+      }
+    },
+    {
+      "name": "msg_all_done",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "end_success",
+          "event": "sent"
+        },
+        {
+          "next": "end_success",
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 700,
+          "y": 2460
+        },
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "✅ *Tu as déjà parié sur tous les matchs disponibles !*\n\n📅 Reviens dès qu'un nouveau match sera ouvert pour pronostiquer.\n\n🍀 Bonne chance pour tes paris en cours !"
       }
     },
     {
@@ -337,8 +457,8 @@
       ],
       "properties": {
         "offset": {
-          "x": 1400,
-          "y": 600
+          "x": 1450,
+          "y": 540
         },
         "from": "{{flow.channel.address}}",
         "message_type": "custom",
@@ -365,11 +485,11 @@
       ],
       "properties": {
         "offset": {
-          "x": -220,
-          "y": 2040
+          "x": -150,
+          "y": 2460
         },
         "from": "{{flow.channel.address}}",
-        "body": "{{widgets.http_get_matchs.parsed.message}}",
+        "body": "{{widgets.http_user_pronos.parsed.remaining_matches_message}}",
         "timeout": "3600"
       }
     },
@@ -389,7 +509,7 @@
       "properties": {
         "offset": {
           "x": -600,
-          "y": 2250
+          "y": 2660
         },
         "from": "{{flow.channel.address}}",
         "to": "{{contact.channel.address}}",
@@ -479,7 +599,7 @@
         "input": "{{widgets.msg_liste_matchs.inbound.Body}}",
         "offset": {
           "x": 0,
-          "y": 2250
+          "y": 2660
         }
       }
     },
@@ -488,7 +608,7 @@
       "type": "set-variables",
       "transitions": [
         {
-          "next": "http_check_existing_prono",
+          "next": "msg_options_prono",
           "event": "next"
         }
       ],
@@ -496,23 +616,23 @@
         "variables": [
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[0].id}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[0].id}}",
             "key": "selected_match_id"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[0].team_a}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[0].team_a}}",
             "key": "selected_team_a"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[0].team_b}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[0].team_b}}",
             "key": "selected_team_b"
           }
         ],
         "offset": {
           "x": -800,
-          "y": 2500
+          "y": 2900
         }
       }
     },
@@ -521,7 +641,7 @@
       "type": "set-variables",
       "transitions": [
         {
-          "next": "http_check_existing_prono",
+          "next": "msg_options_prono",
           "event": "next"
         }
       ],
@@ -529,23 +649,23 @@
         "variables": [
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[1].id}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[1].id}}",
             "key": "selected_match_id"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[1].team_a}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[1].team_a}}",
             "key": "selected_team_a"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[1].team_b}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[1].team_b}}",
             "key": "selected_team_b"
           }
         ],
         "offset": {
           "x": -400,
-          "y": 2500
+          "y": 2900
         }
       }
     },
@@ -554,7 +674,7 @@
       "type": "set-variables",
       "transitions": [
         {
-          "next": "http_check_existing_prono",
+          "next": "msg_options_prono",
           "event": "next"
         }
       ],
@@ -562,23 +682,23 @@
         "variables": [
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[2].id}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[2].id}}",
             "key": "selected_match_id"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[2].team_a}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[2].team_a}}",
             "key": "selected_team_a"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[2].team_b}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[2].team_b}}",
             "key": "selected_team_b"
           }
         ],
         "offset": {
           "x": 0,
-          "y": 2500
+          "y": 2900
         }
       }
     },
@@ -587,7 +707,7 @@
       "type": "set-variables",
       "transitions": [
         {
-          "next": "http_check_existing_prono",
+          "next": "msg_options_prono",
           "event": "next"
         }
       ],
@@ -595,23 +715,23 @@
         "variables": [
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[3].id}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[3].id}}",
             "key": "selected_match_id"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[3].team_a}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[3].team_a}}",
             "key": "selected_team_a"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[3].team_b}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[3].team_b}}",
             "key": "selected_team_b"
           }
         ],
         "offset": {
           "x": 400,
-          "y": 2500
+          "y": 2900
         }
       }
     },
@@ -620,7 +740,7 @@
       "type": "set-variables",
       "transitions": [
         {
-          "next": "http_check_existing_prono",
+          "next": "msg_options_prono",
           "event": "next"
         }
       ],
@@ -628,23 +748,23 @@
         "variables": [
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[4].id}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[4].id}}",
             "key": "selected_match_id"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[4].team_a}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[4].team_a}}",
             "key": "selected_team_a"
           },
           {
             "type": "string",
-            "value": "{{widgets.http_get_matchs.parsed.matches[4].team_b}}",
+            "value": "{{widgets.http_user_pronos.parsed.remaining_matches[4].team_b}}",
             "key": "selected_team_b"
           }
         ],
         "offset": {
           "x": 800,
-          "y": 2500
+          "y": 2900
         }
       }
     },
@@ -664,90 +784,11 @@
       "properties": {
         "offset": {
           "x": 1200,
-          "y": 2500
+          "y": 2900
         },
         "from": "{{flow.channel.address}}",
         "to": "{{contact.channel.address}}",
         "body": "❌ Choix invalide ! Renvoie un message et choisis le numéro d'un match de la liste."
-      }
-    },
-    {
-      "name": "http_check_existing_prono",
-      "type": "make-http-request",
-      "transitions": [
-        {
-          "next": "check_has_existing_prono",
-          "event": "success"
-        },
-        {
-          "next": "msg_options_prono",
-          "event": "failed"
-        }
-      ],
-      "properties": {
-        "offset": {
-          "x": 0,
-          "y": 2750
-        },
-        "method": "POST",
-        "content_type": "application/json",
-        "add_twilio_auth": false,
-        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"match_id\":{{flow.variables.selected_match_id}},\"api_key\":\"{{flow.variables.api_key}}\"}",
-        "url": "https://can-wabracongo.ywcdigital.com/api/can/check-pronostic"
-      }
-    },
-    {
-      "name": "check_has_existing_prono",
-      "type": "split-based-on",
-      "transitions": [
-        {
-          "next": "msg_options_prono",
-          "event": "noMatch"
-        },
-        {
-          "next": "msg_prono_deja_existe",
-          "event": "match",
-          "conditions": [
-            {
-              "friendly_name": "Pronostic existe",
-              "arguments": [
-                "{{widgets.http_check_existing_prono.parsed.has_pronostic}}"
-              ],
-              "type": "equal_to",
-              "value": "true"
-            }
-          ]
-        }
-      ],
-      "properties": {
-        "input": "{{widgets.http_check_existing_prono.parsed.has_pronostic}}",
-        "offset": {
-          "x": 0,
-          "y": 2950
-        }
-      }
-    },
-    {
-      "name": "msg_prono_deja_existe",
-      "type": "send-message",
-      "transitions": [
-        {
-          "next": "end_success",
-          "event": "sent"
-        },
-        {
-          "next": "end_success",
-          "event": "failed"
-        }
-      ],
-      "properties": {
-        "offset": {
-          "x": 500,
-          "y": 3150
-        },
-        "from": "{{flow.channel.address}}",
-        "to": "{{contact.channel.address}}",
-        "body": "🚫 *PRONOSTIC DÉJÀ ENREGISTRÉ*\n\n⚽ {{flow.variables.selected_team_a}} vs {{flow.variables.selected_team_b}}\n\n📊 Ton pronostic actuel :\n{{widgets.http_check_existing_prono.parsed.pronostic_details}}\n\n📅 Placé le : {{widgets.http_check_existing_prono.parsed.created_at}}\n\n❌ *Impossible de modifier ton pronostic.*\n\n🍀 À bientôt pour les prochains matchs !"
       }
     },
     {
@@ -769,7 +810,7 @@
       ],
       "properties": {
         "offset": {
-          "x": -400,
+          "x": -200,
           "y": 3150
         },
         "from": "{{flow.channel.address}}",
@@ -792,7 +833,7 @@
       ],
       "properties": {
         "offset": {
-          "x": -800,
+          "x": -700,
           "y": 3400
         },
         "from": "{{flow.channel.address}}",
