@@ -96,6 +96,7 @@ class TwilioStudioController extends Controller
         $validated = $request->validate([
             'phone'         => 'required|string',
             'name'          => 'required|string|min:2',
+            'address'       => 'nullable|string|max:255',
             'source_type'   => 'nullable|string',
             'source_detail' => 'nullable|string',
             'status'        => 'nullable|string',
@@ -108,6 +109,7 @@ class TwilioStudioController extends Controller
         // pronostic (téléphone + nom uniquement). On applique des valeurs par défaut.
         $sourceType   = $validated['source_type']   ?? 'DIRECT';
         $sourceDetail = $validated['source_detail'] ?? 'WHATSAPP';
+        $address      = isset($validated['address']) ? trim($validated['address']) : null;
 
         // Vérifier si l'utilisateur existe déjà
         $user = User::where('phone', $phone)->first();
@@ -116,6 +118,8 @@ class TwilioStudioController extends Controller
             // Utilisateur déjà inscrit - mise à jour
             $user->update([
                 'name'                => ucwords(strtolower($validated['name'])),
+                // On ne remplace l'adresse que si une nouvelle valeur est fournie
+                'address'             => $address ?: $user->address,
                 'source_type'         => $sourceType,
                 'source_detail'       => $sourceDetail,
                 'registration_status' => 'INSCRIT',
@@ -155,6 +159,7 @@ class TwilioStudioController extends Controller
                 'name'                => ucwords(strtolower($validated['name'])),
                 'phone'               => $phone,
                 'village_id'          => $villageId,
+                'address'             => $address,
                 'source_type'         => $sourceType,
                 'source_detail'       => $sourceDetail,
                 'scan_timestamp'      => $validated['timestamp'] ?? now(),

@@ -147,7 +147,7 @@
       "type": "set-variables",
       "transitions": [
         {
-          "next": "http_inscription",
+          "next": "msg_ask_address",
           "event": "next"
         }
       ],
@@ -162,6 +162,56 @@
         "offset": {
           "x": 800,
           "y": 940
+        }
+      }
+    },
+    {
+      "name": "msg_ask_address",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "set_address",
+          "event": "incomingMessage"
+        },
+        {
+          "next": "msg_timeout",
+          "event": "timeout"
+        },
+        {
+          "next": "end_success",
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 1150,
+          "y": 940
+        },
+        "from": "{{flow.channel.address}}",
+        "body": "📍 Super {{flow.variables.user_name}} !\n\nDans quelle *ville* et *quartier* habites-tu ?\n\n_Exemple : Kinshasa, Gombe_",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "set_address",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "http_inscription",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "type": "string",
+            "value": "{{widgets.msg_ask_address.inbound.Body}}",
+            "key": "user_address"
+          }
+        ],
+        "offset": {
+          "x": 1150,
+          "y": 1120
         }
       }
     },
@@ -186,7 +236,7 @@
         "method": "POST",
         "content_type": "application/json",
         "add_twilio_auth": false,
-        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"name\":\"{{flow.variables.user_name}}\",\"source_type\":\"DIRECT\",\"source_detail\":\"WHATSAPP\",\"api_key\":\"{{flow.variables.api_key}}\"}",
+        "body": "{\"phone\":\"{{flow.variables.phone_number}}\",\"name\":\"{{flow.variables.user_name}}\",\"address\":\"{{flow.variables.user_address}}\",\"source_type\":\"DIRECT\",\"source_detail\":\"WHATSAPP\",\"api_key\":\"{{flow.variables.api_key}}\"}",
         "url": "https://can-wabracongo.ywcdigital.com/api/can/inscription"
       }
     },

@@ -14,6 +14,7 @@ class User extends Authenticatable
         'phone',
         'name',
         'village_id',
+        'address',
         'source_type',
         'source_detail',
         'scan_timestamp',

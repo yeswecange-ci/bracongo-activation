@@ -24,7 +24,7 @@
         </div>
 
         <!-- Filtres -->
-        <form method="GET" action="{{ route('admin.users.index') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form method="GET" action="{{ route('admin.users.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Recherche -->
             <div>
                 <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Recherche</label>
@@ -40,9 +40,22 @@
                         id="search"
                         value="{{ request('search') }}"
                         class="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                        placeholder="Nom ou téléphone..."
+                        placeholder="Nom, téléphone ou adresse..."
                     >
                 </div>
+            </div>
+
+            <!-- Adresse (ville / quartier) -->
+            <div>
+                <label for="address" class="block text-sm font-semibold text-gray-700 mb-2">Adresse</label>
+                <input
+                    type="text"
+                    name="address"
+                    id="address"
+                    value="{{ request('address') }}"
+                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    placeholder="Ville ou quartier..."
+                >
             </div>
 
             <!-- Village -->
@@ -95,6 +108,12 @@
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Joueur</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Téléphone</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            <a href="{{ route('admin.users.index', array_merge(request()->query(), ['sort' => 'address'])) }}" class="hover:text-indigo-600 inline-flex items-center">
+                                Adresse
+                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4 4m0 0l4-4m-4 4V4"></path></svg>
+                            </a>
+                        </th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Village</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Inscrit le</th>
                         <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Statut</th>
@@ -119,6 +138,19 @@
                                     </svg>
                                     {{ $user->phone }}
                                 </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($user->address)
+                                    <div class="flex items-center text-sm text-gray-900">
+                                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        {{ $user->address }}
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-400 italic">—</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($user->village)
@@ -171,7 +203,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                 </svg>

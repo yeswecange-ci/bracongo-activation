@@ -21,11 +21,24 @@ class UserController extends Controller
         if ($request->has('search') && $request->search != '') {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+                  ->orWhere('phone', 'like', '%' . $request->search . '%')
+                  ->orWhere('address', 'like', '%' . $request->search . '%');
             });
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Filtre dédié par adresse (ville / quartier)
+        if ($request->filled('address')) {
+            $query->where('address', 'like', '%' . $request->address . '%');
+        }
+
+        // Tri : par adresse si demandé, sinon par date d'inscription
+        if ($request->get('sort') === 'address') {
+            $query->orderBy('address', 'asc')->orderBy('created_at', 'desc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $users = $query->paginate(15);
         $villages = Village::where('is_active', true)->get();
 
         return view('admin.users.index', compact('users', 'villages'));
