@@ -34,7 +34,7 @@
             border-top: 1px solid #e5e7eb;
             padding-top: 6px;
         }
-        footer .page:after { content: "Page " counter(page) " / " counter(pages); }
+        footer .page:after { content: "Page " counter(page); }
 
         /* Bandeau match */
         .match-card {
@@ -112,14 +112,14 @@
 <body>
     <header>
         <div class="header-band">
-            <span class="brand">CAN 2025<br>Bracongo</span>
+            <span class="brand">Coupe du Monde 2026<br>Bracongo</span>
             <h1>Liste des gagnants</h1>
             <div class="sub">{{ $match->team_a }} &nbsp;vs&nbsp; {{ $match->team_b }}</div>
         </div>
     </header>
 
     <footer>
-        <span>Document genere le {{ $generatedAt->format('d/m/Y a H:i') }}</span>
+        <span>Document genere le {{ $generatedAt->format('d/m/Y \à H:i') }}</span>
         <span class="page" style="float:right;"></span>
     </footer>
 
@@ -144,7 +144,7 @@
                 </tr>
             </table>
             <div class="match-meta" style="margin-top:8px; text-align:center;">
-                Match du {{ $match->match_date->format('d/m/Y a H:i') }}
+                Match du {{ $match->match_date->format('d/m/Y \à H:i') }}
                 &nbsp;|&nbsp; Statut : {{ ucfirst($match->status) }}
             </div>
         </div>

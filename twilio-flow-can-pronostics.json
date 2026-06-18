@@ -1,5 +1,5 @@
 {
-  "description": "CAN 2025 - Pronostics + Inscription auto. Historique au retour, saut de sélection si 1 seul match, clé API.",
+  "description": "Coupe du Monde 2026 - Pronostics + Inscription auto. Historique au retour, saut de sélection si 1 seul match, clé API.",
   "states": [
     {
       "name": "Trigger",
@@ -139,7 +139,7 @@
           "y": 740
         },
         "from": "{{flow.channel.address}}",
-        "body": "👋 *Bienvenue dans le jeu de pronostics CAN 2025 !*\n\nAvant de jouer, dis-moi simplement ton *prénom* 👇",
+        "body": "👋 *Bienvenue dans le jeu de pronostics Coupe du Monde 2026 !*\n\nAvant de jouer, dis-moi simplement ton *prénom* 👇",
         "timeout": "3600"
       }
     },
