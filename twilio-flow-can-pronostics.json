@@ -12,6 +12,7 @@
         {
           "event": "incomingCall"
         },
+        
         {
           "next": "set_phone",
           "event": "incomingConversationMessage"

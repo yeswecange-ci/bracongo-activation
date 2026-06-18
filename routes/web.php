@@ -109,6 +109,8 @@ Route::prefix('admin')->group(function () {
             ->name('admin.pronostics.by-match');
         Route::get('matches/{match}/pronostics/export', [\App\Http\Controllers\Admin\PronosticController::class, 'exportWinners'])
             ->name('admin.pronostics.export.match-winners');
+        Route::get('matches/{match}/pronostics/export-pdf', [\App\Http\Controllers\Admin\PronosticController::class, 'exportWinnersPdf'])
+            ->name('admin.pronostics.export.match-winners-pdf');
 
         Route::post('/matches/{match}/evaluate-pronostics', [\App\Http\Controllers\Admin\PronosticController::class, 'evaluateMatch'])
             ->name('admin.matches.evaluate');

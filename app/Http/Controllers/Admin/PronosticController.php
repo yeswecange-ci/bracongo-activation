@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FootballMatch;
 use App\Models\Pronostic;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -312,6 +313,34 @@ class PronosticController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export PDF stylisé des gagnants d'un match spécifique
+     */
+    public function exportWinnersPdf(FootballMatch $match)
+    {
+        $winners = $match->pronostics()
+            ->with(['user.village'])
+            ->where('is_winner', true)
+            ->orderByDesc('points_won')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $exactCount = $winners->where('points_won', Pronostic::POINTS_EXACT_SCORE)->count();
+
+        $pdf = Pdf::loadView('admin.pronostics.winners-pdf', [
+            'match'      => $match,
+            'winners'    => $winners,
+            'exactCount' => $exactCount,
+            'generatedAt' => now(),
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'gagnants_'
+            . str_replace(' ', '-', $match->team_a) . '_vs_' . str_replace(' ', '-', $match->team_b)
+            . '_' . now()->format('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**
