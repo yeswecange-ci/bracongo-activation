@@ -165,6 +165,14 @@ Route::prefix('admin')->group(function () {
         Route::get('analytics/export/pronostics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'exportPronostics'])
             ->name('admin.analytics.export.pronostics');
 
+        // Rapport global des activations (CAN + Coupe du Monde) : PDF + Excel
+        Route::get('rapport', [\App\Http\Controllers\Admin\RapportController::class, 'index'])
+            ->name('admin.rapport');
+        Route::get('rapport/export/pdf', [\App\Http\Controllers\Admin\RapportController::class, 'exportPdf'])
+            ->name('admin.rapport.pdf');
+        Route::get('rapport/export/excel', [\App\Http\Controllers\Admin\RapportController::class, 'exportExcel'])
+            ->name('admin.rapport.excel');
+
         // Routes Quiz Questions
         Route::resource('quiz/questions', \App\Http\Controllers\Admin\QuizQuestionController::class)
             ->names([
